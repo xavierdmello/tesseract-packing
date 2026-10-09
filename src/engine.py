@@ -23,11 +23,12 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-STRATS = ["best", "grow", "shrink", "random", "morph"]
+STRATS = ["best", "grow", "shrink", "random", "morph", "seed"]
 MIXES = [  # per-worker strategy probabilities (best, grow, shrink, random, morph)
     # morph lost the 3D n=12 A/B test (2.962 vs 2.935 in 3 min), so it gets a small exploration share
-    (0.6, 0.2, 0.1, 0.1, 0.0), (0.3, 0.3, 0.1, 0.2, 0.1), (0.1, 0.1, 0.0, 0.5, 0.3), (0.4, 0.4, 0.2, 0.0, 0.0),
-    (0.2, 0.3, 0.2, 0.2, 0.1), (0.7, 0.1, 0.1, 0.1, 0.0)]
+    # seed = structured starts from src/theory_seeds.py (only for n where a generator exists)
+    (0.6, 0.2, 0.1, 0.1, 0.0, 0.1), (0.3, 0.3, 0.1, 0.2, 0.1, 0.2), (0.1, 0.1, 0.0, 0.5, 0.3, 0.1), (0.4, 0.4, 0.2, 0.0, 0.0, 0.2),
+    (0.2, 0.3, 0.2, 0.2, 0.1, 0.3), (0.7, 0.1, 0.1, 0.1, 0.0, 0.1)]
 
 
 # =============================================================== worker
@@ -43,6 +44,28 @@ def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph
         mix = np.array([st in allowed for st in STRATS], float)   # explicit strategy list: equal weights
     lr_choices = [0.003, 0.006, 0.012, 0.02]
     cfg_cache = {}
+    rot_cache = {}
+
+    def seed_gen(n):
+        """Return f(s_start) -> (s, cubes) for structured seeds, or None if there is no generator for n."""
+        if D != 4: return None
+        import theory_seeds as TS
+        if 18 <= n <= 24: return lambda s0: TS.hybrid17_seed(n, s0, rng=rng)
+        if 26 <= n <= 41: return lambda s0: TS.cross_cell_seed(n, s0, rng=rng)
+        if 101 <= n <= 120:
+            path = os.path.join(ROOT, "results_aux2", "best", "d2_n10.json")
+            if not os.path.exists(path): return None
+            e2 = json.load(open(path))
+            sq = [((q["c"][0], q["c"][1]), math.atan2(q["R"][1][0], q["R"][0][0])) for q in e2["cubes"]]
+            return lambda s0: TS.product_frame_seed(sq, sq, n - 100, max(s0, e2["s"]), rng=rng)
+        return None
+
+    def p_of(m, R):
+        key = tuple(round(x, 9) for row in R for x in row)
+        if key not in rot_cache:
+            from kernel import fit_p
+            rot_cache[key] = fit_p([R])[0][0]
+        return rot_cache[key]
 
     def to_tensor_cfg(m, cfg):
         """config dict -> (c, p) tensors (uses stored quaternion parameters 'p')."""
@@ -81,7 +104,8 @@ def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph
             if k == 0: return
             best_n, best_m1, best_p1 = board_get(n), board_get(n - 1), board_get(n + 1)
             cur = (board.get((D, n)) or {}).get("s", n ** 0.25 + 1)
-            avail = np.array([best_n is not None, best_m1 is not None, best_p1 is not None, True, True], float)
+            sg = seed_gen(n)
+            avail = np.array([best_n is not None, best_m1 is not None, best_p1 is not None, True, True, sg is not None], float)
             pr = mix * avail
             if pr.sum() == 0: pr = avail
             pr = pr / pr.sum()
@@ -102,7 +126,16 @@ def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph
                 mph[E] = 1 if st == "morph" else 0; jamc[E] = 0
                 mk = (morph_cfg or {}).get("k", (8, 40))
                 dr[E] = (0.5 / torch.randint(mk[0], mk[1], (kk,), device=m.dev).to(m.dt)) if st == "morph" else 0.0
-                if st in ("random", "morph"):
+                if st == "seed":
+                    cs_, ps_ = [], []
+                    for t_ in range(kk):
+                        s_seed, cubes_ = sg(float(s_start[t_]))
+                        s_start[t_] = max(float(s_start[t_]), s_seed)
+                        cs_.append(torch.tensor([q["c"] for q in cubes_], **kw))
+                        ps_.append(torch.tensor([p_of(m, q["R"]) for q in cubes_], **kw))
+                    s0[E] = s_start; m.s[E] = s_start
+                    c, p = torch.stack(cs_), torch.stack(ps_)
+                elif st in ("random", "morph"):
                     c, p = cr, prr
                 else:
                     src = {"best": best_n, "grow": best_m1, "shrink": best_p1}[st]
