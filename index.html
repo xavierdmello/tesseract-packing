@@ -84,16 +84,17 @@ button.on { background: #222; color: #fff; }
 <body>
 <main>
   <h1>Tesseracts in Tesseracts</h1>
-  <p class="byline" style="max-width:760px;margin:6px auto 8px">The following pictures show <i>n</i> unit tesseracts packed inside the smallest known tesseract (of side <i>s</i>). For all other values of <i>n</i>, the trivial packing is the best known.</p>
-  <p class="byline" style="max-width:760px;margin:0 auto 14px">4th dimension is visualized as time: two cubes can occupy the same space, just never at the same time.</p>
-  <p class="byline" style="margin:-8px auto 14px;font-size:15px;color:#555">Inspired by: <a href="https://erich-friedman.github.io/packing/cubincub/">cube packing</a> and <a href="https://kingbird.myphotos.cc/packing/squares_in_squares.html">square packing</a></p>
+  <style>.tip{position:relative;color:#1a4fb4;text-decoration:underline dotted #1a4fb4;text-underline-offset:3px;cursor:help;outline:none}.tip .pop{visibility:hidden;opacity:0;transition:opacity .15s;position:absolute;left:50%;top:1.6em;transform:translateX(-50%);width:max-content;max-width:280px;background:#fff;color:#222;border:1px solid #bbb;box-shadow:0 2px 8px rgba(0,0,0,.12);padding:6px 10px;font-size:14.5px;line-height:1.35;z-index:20;text-align:center}.tip:hover .pop,.tip:focus .pop{visibility:visible;opacity:1}</style>
+  <p class="byline" style="max-width:900px;margin:6px auto 14px">The following pictures show <i>n</i> unit tesseracts packed inside the smallest known tesseract (of side <i>s</i>), with the <span class="tip" tabindex="0">4th dimension shown as time<span class="pop">Two cubes can occupy the same space, just never at the same time.</span></span>.</p>
   <div class="grid" id="grid"></div>
   <p class="small" id="trivnote" style="text-align:center"></p>
   <div style="display:none">
   <hr>
   <p class="byline">four-dimensional analogue of Erich Friedman's <i>Squares in Squares</i> and <i>Cubes in Cubes</i></p>
   <div id="live"><span class="dot" id="dot"></span><span id="livetxt">connecting to the local search engine…</span>
-    <button id="autobtn" onclick="toggleAuto()" style="margin-left:12px;padding:2px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px;cursor:pointer">…</button></div>
+    <button id="autobtn" onclick="toggleAuto()" style="margin-left:12px;padding:2px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px;cursor:pointer">…</button>
+    <span style="margin-left:10px;font-size:13px;color:#555">minutes per run (auto) <input id="automin" type="number" min="0.5" max="60" step="0.5" value="10" style="width:52px" onchange="setAuto({minutes:+this.value})"></span>
+    <span style="margin-left:10px;font-size:13px;color:#555">research cores <input id="rescores" type="number" min="0" max="12" step="1" value="4" style="width:42px" onchange="setAuto({research_cores:+this.value})"> <span id="prodcores">· production 8</span></span></div>
   <div id="bar"><div></div></div>
   <div id="news"></div>
   <hr>
@@ -119,6 +120,20 @@ button.on { background: #222; color: #fff; }
   Every packing shown was certified in 64-bit floating point before being recorded. Every vertex lies in [0,<i>s</i>]<sup>4</sup>, and every pair of tesseracts has a separating hyperplane found by linear programming.</p>
   <hr>
   <h2 id="status">Search status</h2>
+  <div id="manual" style="max-width:760px;margin:6px auto 10px;font-size:14px;line-height:2">
+    <b>Manual control</b> (works in auto and manual mode):
+    n <input id="mc-n" type="number" min="1" style="width:64px" title="any positive n">
+    minutes <input id="mc-min" type="number" min="0.5" max="60" step="0.5" value="10" style="width:52px">
+    <button onclick="ctl('force')" title="start this run now (preempts the newest run)">▶ run now</button>
+    <button onclick="ctl('queue_add')" title="keep re-running this n before the plan's entries">+ add to queue</button>
+    <button onclick="ctl('block')" title="never schedule this n">⊘ block n</button>
+    <button onclick="ctl('focus')" title="all 12 cores on this n for the given minutes; nothing else runs" style="font-weight:bold">🎯 all 12 cores on n</button>
+    <br><button onclick="ctl('stop_all')" title="end every current run; cores take their next tasks">⏹ stop all runs</button>
+    <button onclick="ctl('pause')" title="stop everything; nothing new starts until resume">⏸ pause all</button>
+    <button onclick="ctl('resume')">▶ resume</button>
+    <button onclick="ctl('unfocus')" title="end focus mode early">end focus</button>
+    <div id="mc-state" style="color:#555"></div>
+  </div>
   <div id="cores"></div>
   <div id="notebook">
     <h2>Research notebook</h2>
@@ -136,7 +151,7 @@ button.on { background: #222; color: #fff; }
   <p class="small">Engine log</p>
   <div id="log"></div>
   </div>
-  <p class="byline" style="margin:24px auto 0">Click a picture for alternative visualizations.</p>
+  <p class="byline" style="margin:6px auto 0;font-size:15px;color:#555">Inspired by: <a href="https://erich-friedman.github.io/packing/cubincub/">cube packing</a> and <a href="https://kingbird.myphotos.cc/packing/squares_in_squares.html">square packing</a></p>
 </main>
 
 <dialog id="dlg">
@@ -420,7 +435,8 @@ function render() {
       return `<div class="row"><span>${+w + 1}</span><span><b>${st.n}</b> <span class="small" style="color:var(--muted)">${+(st.minutes || 1).toFixed(1)} min</span></span>` +
         `<span><div class="pbar"><div style="width:${(100 * frac).toFixed(0)}%"></div></div></span>` +
         `<span class="mono">${tb != null ? (+tb).toFixed(6) : 'not yet valid'}</span><span class="mono">${rec != null ? (+rec).toFixed(6) : ''}</span>` +
-        `<span class="${ahead ? 'ahead' : ''}">${ahead ? 'record!' : ''}</span></div>`; }).join('');
+        `<span class="${ahead ? 'ahead' : ''}">${ahead ? 'record! ' : ''}<a href="#" title="stop this run; the core takes the next task" onclick="ctl('stop',{wid:${+w}});return false">stop</a></span></div>`; }).join('');
+  if (!CTL) renderCtl(); else if (LIVE.control) { CTL = LIVE.control; renderCtl(); }
   // research / experiment cores (separate engines, up to 4 cores)
   const RS = (L.research || []);
   if (on && RS.length) {
@@ -474,7 +490,7 @@ function render() {
   for (const [k, v] of Object.entries(L.table)) { const n = +k; if (isGrid(n) && !provedTrivial(n)) hidden.push(n); else shown[k] = v; }
   const G = groups(shown);
   const ranges = []; hidden.sort((a, b) => a - b).forEach(n => { const r = ranges[ranges.length - 1]; if (r && r[1] === n - 1) r[1] = n; else ranges.push([n, n]); });
-  document.getElementById('trivnote').innerHTML = (hidden.length ? `For n = ${ranges.map(([a, b]) => a === b ? a : a + '–' + b).join(', ')}, the best known packing is still the trivial grid (s = ⌈n<sup>1/4</sup>⌉), which is not shown.` : '') +
+  document.getElementById('trivnote').innerHTML = (hidden.length ? `For all other n, the best known packing is still the trivial grid (s = ⌈n<sup>1/4</sup>⌉), which is not shown.` : '') +
     (citedNs.length ? `<br>Not shown: n = ${citedNs.map(x => x[0]).join(', ')}, where the best bound (s ≤ ${[...new Set(citedNs.map(x => (+x[1]).toFixed(5)))].join(', ')}) comes from Friedman's 3D packings stacked in two layers. We don't have those coordinates; the search is trying to beat them.` : '');
   G.forEach((g, gi) => {
     const id = 'g' + g.lo, e = L.table[g.hi]; seen.add(id);
@@ -603,6 +619,34 @@ function autoLabel() {
   const on = !!(PLAN && PLAN.auto);
   b.textContent = on ? '⏸ stop auto mode' : '▶ start auto mode';
   b.style.background = on ? '#fdecec' : '#e9f6ec';
+  const mi = document.getElementById('automin'), rc = document.getElementById('rescores');
+  if (mi && document.activeElement !== mi && PLAN) mi.value = PLAN.auto_minutes ?? 10;
+  if (rc && document.activeElement !== rc && PLAN) rc.value = PLAN.research_cores ?? 4;
+  const pc = document.getElementById('prodcores'); if (pc && PLAN) pc.textContent = '· production ' + (12 - (PLAN.research_cores ?? 4));
+}
+async function ctl(action, extra = {}) {
+  const n = +document.getElementById('mc-n').value, minutes = +document.getElementById('mc-min').value || 10;
+  const body = { action, ...extra };
+  if (['force', 'queue_add', 'block', 'focus'].includes(action)) { if (!n) return; body.n = n; body.minutes = minutes; }
+  try { const r = await fetch('/control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (r.ok) { CTL = await r.json(); renderCtl(); }
+        else document.getElementById('mc-state').innerHTML = '<span style="color:#b4442f">' + (r.status === 400 ? 'n must be a positive integer' : 'request failed') + '</span>'; } catch (e) {}
+}
+let CTL = null;
+function renderCtl() {
+  const c = CTL || (LIVE && LIVE.control) || {}; const el = document.getElementById('mc-state'); if (!el) return;
+  const q = (c.queue || []).map((e, i) => `n=${e.n} · ${e.minutes} min <a href="#" onclick="ctl('queue_remove',{index:${i}});return false">×</a>`).join(' &nbsp; ');
+  const b = (c.blocked || []).map(n => `${n} <a href="#" onclick="document.getElementById('mc-n').value=${n};ctl('unblock');return false">×</a>`).join(' &nbsp; ');
+  const f = (c.forced || []).map(e => `n=${e.n}`).join(', ');
+  const fo = c.focus && c.focus.until * 1000 > Date.now() ? `<b style="color:#1a4fb4">FOCUS: all cores on n=${c.focus.n}, ${Math.ceil((c.focus.until * 1000 - Date.now()) / 60000)} min left</b> &nbsp;|&nbsp; ` : '';
+  const pa = c.paused ? '<b style="color:#b4442f">PAUSED: nothing is running</b> &nbsp;|&nbsp; ' : '';
+  el.innerHTML = pa + fo + `queue: ${q || '–'} &nbsp;|&nbsp; blocked: ${b || '–'}${f ? ' &nbsp;|&nbsp; starting now: ' + f : ''}`;
+}
+async function setAuto(body) {
+  try {
+    const r = await fetch('/auto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (r.ok) { const j = await r.json(); if (PLAN) Object.assign(PLAN, { auto: j.auto, auto_minutes: j.minutes, research_cores: j.research_cores }); autoLabel(); }
+  } catch (e) {}
 }
 async function toggleAuto() {
   try {
