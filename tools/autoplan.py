@@ -52,6 +52,23 @@ def stop_stale_experiments(max_age=1800):
             subprocess.run(["kill", "-TERM", parts[0]]); print(time.strftime("%H:%M"), "stopped stale experiment", parts[2][:90], flush=True)
 
 
+RESEARCH_CORES = 4
+
+
+def research_workers():
+    """(workers used by research engines, whether the auto sweep is running)."""
+    ps = subprocess.run(["ps", "-eo", "pid=,ppid=,command="], capture_output=True, text=True).stdout.splitlines()
+    rows = [l.split(None, 2) for l in ps if len(l.split(None, 2)) == 3]
+    engines = {r[0]: r[2] for r in rows if "src/engine.py" in r[2] and re.search(r"--results results_(exp|aux)", r[2])}
+    used = 0
+    for pid in engines:
+        kids = [r for r in rows if r[1] == pid and "spawn_main" in r[2]]
+        used += max(0, len(kids) - 1)            # minus the Manager process
+    # external research tools (e.g. polish binaries) count one core each
+    used += sum(1 for r in rows if re.search(r"(^|/)(polish|polishx|pack) ", r[2] + " ") and "grep" not in r[2])
+    return used, any("results_exp_auto" in c for c in engines.values())
+
+
 def research_running():
     out = subprocess.run(["pgrep", "-f", "results_(exp|aux)"], capture_output=True, text=True).stdout.split()
     return len(out) > 0
@@ -92,12 +109,14 @@ while True:
             subprocess.Popen(["caffeinate", "-i", "-w", str(p.pid)], start_new_session=True)
             print(time.strftime("%H:%M"), "watchdog: restarted production engine", flush=True)
         stop_stale_experiments()
-        if not research_running():
-            subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", SWEEP_NS, "--minutes", "5", "--cpu-workers", "4",
+        used, sweeping = research_workers()
+        free = RESEARCH_CORES - used
+        if free > 0 and not sweeping:              # keep all 12 cores busy: fill the research budget with a breadth sweep
+            subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", SWEEP_NS, "--minutes", "5", "--cpu-workers", str(free),
                               "--gpu-workers", "0", "--native", "--port", "8889", "--results", "results_exp_auto",
                               "--label", "auto: breadth sweep (rule-based, AI offline)", "--no-dashboard"],
                              stdout=open("logs/exp_auto.out", "a"), stderr=open("logs/exp_auto.err", "a"), start_new_session=True)
-            print(time.strftime("%H:%M"), "started auto breadth sweep on research cores", flush=True)
+            print(time.strftime("%H:%M"), f"started auto breadth sweep on {free} free research core(s)", flush=True)
         print(time.strftime("%H:%M"), "plan:", [e["n"] for e in q], "hot", hot, "cold", sorted(cold), flush=True)
     except Exception as ex:
         print(time.strftime("%H:%M"), "autoplan error:", ex, flush=True)
