@@ -1,0 +1,25 @@
+{
+  "updated": "2026-10-09 14:00",
+  "note": "Round 3. The grow chain is working: 26 (2.956 → 2.9548) and 27 (2.98995 → 2.9818) both beat the bounds from Friedman's 3D packings within a minute or two. n = 27 was still improving when its minute ran out, so it gets the first long (10-minute) search. Everything else stays at 1 minute and moves along the chain toward 29, the first n where any s < 3 would be new.",
+  "insights": [
+    "Three records so far (17, 26, 27), all from \"grow\": the best (n−1) packing plus one cube. Random starts haven't produced a record yet.",
+    "Records appear right after highly structured packings (the 16-grid, the 25-cube product). 4D has slack just above perfect structures.",
+    "n = 18–25 haven't moved off 2+1/√2 in ~20 minutes of total search. I suspect 18 genuinely needs ≈2.707, like 2D where s(5) = 2.707 but s(6) = 3.",
+    "For n ≥ 80, a 1-minute task can't even reach a valid packing at the current speed. Parked until the faster kernel exists.",
+    "Long searches go only where the last task was still improving at the buzzer (n = 27 now)."
+  ],
+  "queue": [
+    {"n": 27, "minutes": 10, "why": "Long search (10 min). It dropped 2.98995 → 2.9818 in its last seconds, so there's likely more to find."},
+    {"n": 28, "why": "Grow from the new 27. The bound to beat is 2.98995 from Friedman's 14-cube lift, with no coordinates; a certified packing below it would be new."},
+    {"n": 29, "why": "First n with only the trivial s = 3. Grow from 28 once 28 improves."},
+    {"n": 26, "why": "Still creeping down (2.95503 → 2.95483). A cheap 1-minute check per cycle."},
+    {"n": 30, "why": "Chain continuation."},
+    {"n": 17, "why": "Our biggest record. One more 1-minute check per cycle in case a new trick appears."},
+    {"n": 31, "why": "Chain continuation."},
+    {"n": 18, "why": "Hardest open question, kept warm with one core."},
+    {"n": 32, "why": "Chain continuation."},
+    {"n": 33, "why": "Chain continuation."},
+    {"n": 19, "why": "Plateau follow-up, low priority."},
+    {"n": 41, "why": "Medium-n spot check."}
+  ]
+}

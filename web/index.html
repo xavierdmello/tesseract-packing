@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tesseracts in Tesseracts</title>
+<style>
+:root { --bg: #ffffff; --fg: #000000; --muted: #5a5a5a; --rule: #bbbbbb; --link: #0000ee; --live: #1a7f37; --hi: #fff6d6; --play: #c0392b; }
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); margin: 0; }
+body { font-family: "Times New Roman", Times, Georgia, serif; font-size: 17px; line-height: 1.42; }
+main { max-width: 1240px; margin: 0 auto; padding: 18px 16px 60px; }
+h1 { font-weight: normal; font-size: 46px; text-align: center; margin: 6px 0 0; }
+h2 { font-weight: normal; font-size: 24px; margin: 6px 0; text-align: center; }
+.byline { text-align: center; margin: 0 0 14px; font-size: 16px; }
+p { margin: 8px 0; }
+hr { border: 0; border-top: 2px solid var(--rule); margin: 16px 0; }
+a { color: var(--link); }
+#live { text-align: center; font-size: 16px; margin: 6px 0 2px; }
+#live .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #999; margin-right: 6px; vertical-align: 1px; }
+#live .dot.on { background: var(--live); animation: blink 1.6s infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+#bar { height: 3px; background: #eee; max-width: 520px; margin: 6px auto 0; }
+#bar > div { height: 3px; background: var(--live); width: 0; transition: width 1s linear; }
+#news { text-align: center; font-size: 15px; color: var(--muted); min-height: 1.4em; margin-top: 6px; }
+#news b { color: var(--fg); font-weight: normal; }
+.explain { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 22px; align-items: start; margin: 8px 0 4px; }
+@media (max-width: 860px) { .explain { grid-template-columns: 1fr; } }
+.explain figure { margin: 0; text-align: center; }
+.explain canvas { width: 100%; max-width: 300px; display: block; margin: 0 auto; }
+.explain figcaption { font-size: 15px; margin-top: 4px; }
+.explain .txt { font-size: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px 18px; margin-top: 10px; }
+.cell { text-align: center; cursor: pointer; padding: 6px 4px 8px; border-radius: 2px; }
+.cell.searching { background: var(--hi); }
+.cell .lab { font-size: 26px; margin-bottom: 2px; }
+.cell canvas.mv { width: 240px; height: 240px; display: block; margin: 0 auto; }
+.cell canvas.tl { width: 240px; display: block; margin: 2px auto 0; }
+.cell .cap { font-size: 16px; margin-top: 4px; }
+.cell .who { font-size: 15.5px; }
+.cell .note { font-size: 14px; color: var(--muted); }
+.nopic { width: 240px; height: 240px; margin: 0 auto; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; border: 1px dashed var(--rule); padding: 20px; }
+.flash { animation: flash 3s; }
+@keyframes flash { 0% { background: #c9f2d2; } 100% { background: transparent; } }
+table { border-collapse: collapse; margin: 8px auto; font-size: 15.5px; }
+td, th { padding: 2px 12px; border-bottom: 1px solid #e3e3e3; text-align: right; }
+th { font-weight: normal; color: var(--muted); }
+td.l, th.l { text-align: left; }
+.small { font-size: 15px; }
+#log { font-family: Menlo, monospace; font-size: 12px; max-height: 210px; overflow: auto; white-space: pre-wrap; color: #333; border: 1px solid #e3e3e3; padding: 6px 8px; }
+#cores { max-width: 760px; margin: 10px auto 0; font-size: 15px; }
+#cores .row { display: grid; grid-template-columns: 62px 58px 1fr 104px 104px 62px; gap: 8px; align-items: center; padding: 2px 0; border-bottom: 1px solid #eee; }
+#cores .row.head { color: var(--muted); font-size: 14px; }
+#cores .pbar { height: 6px; background: #eee; }
+#cores .pbar > div { height: 6px; background: #888; }
+#cores .ahead { color: var(--live); }
+#cores .mono { font-family: Menlo, monospace; font-size: 13px; }
+#notebook { max-width: 820px; margin: 18px auto 0; border: 1px solid #ddd; padding: 8px 18px 10px; }
+#notebook h2 { margin: 4px 0 2px; font-size: 22px; }
+#notebook .nbnote { font-style: italic; }
+#notebook ol { margin: 6px 0; padding-left: 22px; list-style: none; }
+#notebook summary { cursor: pointer; margin: 6px 0; }
+#notebook li { margin: 3px 0; }
+#notebook li .st { font-size: 13px; color: var(--muted); }
+#notebook li.now .st { color: var(--live); }
+#notebook ul { margin: 6px 0 2px; padding-left: 22px; font-size: 15.5px; }
+dialog { border: 1px solid #999; padding: 0; width: min(1020px, 97vw); max-height: 96vh; background: #fff; color: #000; }
+dialog::backdrop { background: rgba(0, 0, 0, .35); }
+.vhead { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 16px 0; }
+.vhead .t { font-size: 26px; }
+.vbody { padding: 6px 16px 16px; display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; }
+@media (max-width: 760px) { .vbody { grid-template-columns: 1fr; } }
+#vc { width: 100%; aspect-ratio: 1; display: block; cursor: grab; touch-action: none; }
+#vtl { width: 100%; display: block; cursor: ew-resize; margin-top: 6px; touch-action: none; }
+.ctl { font-size: 15px; }
+.ctl label { display: block; margin: 10px 0 2px; }
+.ctl input[type=range] { width: 100%; }
+button { font: inherit; font-size: 15px; background: #f3f3f3; border: 1px solid #aaa; padding: 2px 10px; cursor: pointer; }
+button.on { background: #222; color: #fff; }
+.seg button { margin-right: 4px; }
+.hint { color: var(--muted); font-size: 14px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tesseracts in Tesseracts</h1>
+  <div class="grid" id="grid"></div>
+  <p class="small" id="trivnote" style="text-align:center"></p>
+  <hr>
+  <p class="byline">four-dimensional analogue of Erich Friedman's <i>Squares in Squares</i> and <i>Cubes in Cubes</i></p>
+  <div id="live"><span class="dot" id="dot"></span><span id="livetxt">connecting to the local search engine…</span></div>
+  <div id="bar"><div></div></div>
+  <div id="news"></div>
+  <hr>
+  <p>The following pictures show <i>n</i> unit tesseracts (4-dimensional cubes) packed inside the smallest known tesseract of side <i>s</i>.</p>
+  <h2>How to read the pictures</h2>
+  <div class="explain">
+    <figure><canvas id="ex2d" width="600" height="600"></canvas><figcaption>A 2D packing: 5 unit squares in a square of side 2.707.</figcaption></figure>
+    <figure><canvas id="ex1d" width="600" height="600"></canvas><figcaption>What a 1-dimensional creature living on the red line sees as the line sweeps upward.</figcaption></figure>
+    <div class="txt">
+      <p>Treat one direction as <b>time</b>. A creature living on the red line can't see the whole square. It only sees a moving row of segments that appear, slide around and disappear. The tilted square shows up as a segment that grows and then shrinks.</p>
+      <p>We do the same thing one dimension up. Each tesseract is shown as an <b>ordinary 3D cube that exists for a while</b>. The 4th coordinate is time, and the box exists for a time <i>s</i>. Two cubes may occupy the same place, just never at the same moment. A tilted tesseract is a cube that changes shape while it exists.</p>
+      <p>Under each movie, the <b>timeline</b> has one bar per tesseract showing when it exists, in matching colours. The red line marks the current moment. Click a picture to pause it, scrub through time, or rotate it.</p>
+    </div>
+  </div>
+  <p class="small">If a label covers several values of n, the movie shows the largest one; each smaller n is obtained by removing tesseracts.</p>
+  <hr>
+  <p class="small" style="text-align:center">Table of results</p>
+  <table id="tbl"></table>
+  <hr>
+  <p class="small">What is proved. s(1) = 1 is trivial. s(n) ≥ n<sup>1/4</sup> by volume, so s(n) &gt; 2 for every n ≥ 17.
+  s(n) = 2 for 2 ≤ n ≤ 16. The grid gives the upper bound. For the lower bound, a unit 4-cube inside a 4-cube of side less than 2 must contain the centre, so two of them would overlap.
+  We reduced that lemma to an explicit inequality over 4×4 rotation matrices and checked it numerically. A complete rigorous proof is in progress.
+  Every packing shown was certified in 64-bit floating point before being recorded. Every vertex lies in [0,<i>s</i>]<sup>4</sup>, and every pair of tesseracts has a separating hyperplane found by linear programming.</p>
+  <hr>
+  <h2 id="status">Search status</h2>
+  <div id="cores"></div>
+  <div id="notebook">
+    <h2>Research notebook</h2>
+    <p class="nbnote" id="nb-note"></p>
+    <ol id="nb-queue"></ol>
+    <ul id="nb-ins"></ul>
+  </div>
+  <p class="small">Engine log</p>
+  <div id="log"></div>
+</main>
+
+<dialog id="dlg">
+  <div class="vhead"><span class="t" id="vt"></span><span><span id="vs"></span> &nbsp; <button id="vdl">JSON</button> <button id="vx">close</button></span></div>
+  <div class="vbody">
+    <div>
+      <canvas id="vc" width="1200" height="1200"></canvas>
+      <canvas id="vtl" width="1200" height="200"></canvas>
+    </div>
+    <div class="ctl">
+      <div class="seg"><button id="m-slice" class="on">movie (slices)</button><button id="m-proj">4D projection</button></div>
+      <div id="slicectl">
+        <label>time = <span id="wv"></span> of <span id="smax"></span></label>
+        <button id="play">❚❚ pause</button>
+        <label>direction used as time</label>
+        <div class="seg" id="axes"><button data-a="3" class="on">x₄</button><button data-a="2">x₃</button><button data-a="1">x₂</button><button data-a="0">x₁</button></div>
+        <div class="hint">Click or drag on the timeline to scrub. Drag the picture to rotate.</div>
+      </div>
+      <div id="projctl" style="display:none">
+        <label>4D rotation (x₁–x₄ plane)</label>
+        <input type="range" id="rot4" min="0" max="1000" value="0">
+        <button id="spin">▶ spin</button>
+        <div class="hint">Perspective projection from a viewpoint on the 4th axis. Tesseracts further away in the 4th direction are drawn smaller and lighter.
+          This is the classic "cube inside a cube" picture of a tesseract.</div>
+      </div>
+      <div class="hint" id="vinfo"></div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+let LIVE = null, CUR = null;
+// ---------------------------------------------------------------- 4D -> 3D slice geometry
+function sliceCube(q, axis, w) {
+  // returns convex polyhedron {verts:[[x,y,z]], faces:[[idx...]], normals:[[..]]} in the 3 remaining coords
+  const keep = [0,1,2,3].filter(a => a !== axis);
+  const planes = [];   // n.y <= b
+  for (let k = 0; k < 4; k++) {
+    const nv = keep.map(m => q.R[m][k]);
+    let d = q.R[axis][k] * (w - q.c[axis]);
+    for (let t = 0; t < 3; t++) d -= nv[t] * q.c[keep[t]];
+    const nn = Math.hypot(...nv);
+    if (nn < 1e-9) { if (Math.abs(d) > 0.5) return null; continue; }
+    planes.push([nv, 0.5 - d], [nv.map(x => -x), 0.5 + d]);
+  }
+  const P = planes.length, V = [];
+  for (let i = 0; i < P; i++) for (let j = i + 1; j < P; j++) for (let k = j + 1; k < P; k++) {
+    const x = solve3(planes[i][0], planes[j][0], planes[k][0], planes[i][1], planes[j][1], planes[k][1]);
+    if (!x) continue;
+    let ok = true;
+    for (const [nv, b] of planes) if (nv[0]*x[0] + nv[1]*x[1] + nv[2]*x[2] > b + 1e-9) { ok = false; break; }
+    if (ok && !V.some(v => Math.abs(v[0]-x[0]) + Math.abs(v[1]-x[1]) + Math.abs(v[2]-x[2]) < 1e-8)) V.push(x);
+  }
+  if (V.length < 4) return null;
+  const faces = [], normals = [];
+  for (const [nv, b] of planes) {
+    const on = []; V.forEach((v, i) => { if (Math.abs(nv[0]*v[0] + nv[1]*v[1] + nv[2]*v[2] - b) < 1e-7) on.push(i); });
+    if (on.length < 3) continue;
+    const nl = Math.hypot(...nv), n = nv.map(x => x / nl);
+    const cen = [0,1,2].map(t => on.reduce((s, i) => s + V[i][t], 0) / on.length);
+    let u = Math.abs(n[0]) < 0.9 ? [1,0,0] : [0,1,0];
+    u = cross(n, u); const ul = Math.hypot(...u); u = u.map(x => x / ul); const v2 = cross(n, u);
+    on.sort((a, b2) => { const da = sub(V[a], cen), db = sub(V[b2], cen);
+      return Math.atan2(dot(da, v2), dot(da, u)) - Math.atan2(dot(db, v2), dot(db, u)); });
+    faces.push(on); normals.push(n);
+  }
+  return { verts: V, faces, normals };
+}
+function solve3(a, b, c, x, y, z) {
+  const det = a[0]*(b[1]*c[2]-b[2]*c[1]) - a[1]*(b[0]*c[2]-b[2]*c[0]) + a[2]*(b[0]*c[1]-b[1]*c[0]);
+  if (Math.abs(det) < 1e-12) return null;
+  const dx = x*(b[1]*c[2]-b[2]*c[1]) - a[1]*(y*c[2]-b[2]*z) + a[2]*(y*c[1]-b[1]*z);
+  const dy = a[0]*(y*c[2]-b[2]*z) - x*(b[0]*c[2]-b[2]*c[0]) + a[2]*(b[0]*z-y*c[0]);
+  const dz = a[0]*(b[1]*z-y*c[1]) - a[1]*(b[0]*z-y*c[0]) + x*(b[0]*c[1]-b[1]*c[0]);
+  return [dx/det, dy/det, dz/det];
+}
+const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+
+// ---------------------------------------------------------------- colours & lifetimes
+const hue = i => (i * 137.508 + 200) % 360;
+const col = (i, l) => `hsl(${hue(i).toFixed(1)}, 42%, ${l.toFixed(1)}%)`;
+function lifetime(q, axis) {          // interval of the time axis where tesseract q exists
+  const h = 0.5 * (Math.abs(q.R[axis][0]) + Math.abs(q.R[axis][1]) + Math.abs(q.R[axis][2]) + Math.abs(q.R[axis][3]));
+  return [q.c[axis] - h, q.c[axis] + h];
+}
+
+// ---------------------------------------------------------------- 3D rendering
+function viewMat(yaw, pitch) {
+  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  return [[cy, 0, -sy], [-sy*sp, cp, -cy*sp], [sy*cp, sp, cy*cp]];
+}
+const LIGHT = (() => { const l = [-0.35, 0.85, 0.45]; const n = Math.hypot(...l); return l.map(x => x / n); })();
+function drawSlice(ctx, W, e, axis, w, yaw, pitch) {
+  const s = e.s, M = viewMat(yaw, pitch), h = s / 2;
+  const T = p => { const q = [p[0]-h, p[2]-h, p[1]-h];
+    return [M[0][0]*q[0]+M[0][1]*q[1]+M[0][2]*q[2], M[1][0]*q[0]+M[1][1]*q[1]+M[1][2]*q[2], M[2][0]*q[0]+M[2][1]*q[1]+M[2][2]*q[2]]; };
+  const Tn = n => T([n[0]+h, n[1]+h, n[2]+h]);
+  const scale = W / (s * 1.85), cx = W / 2, cy = W / 2;
+  ctx.clearRect(0, 0, W, W);
+  const cv = []; for (let i = 0; i < 8; i++) cv.push(T([(i&1)*s, (i>>1&1)*s, (i>>2&1)*s]));
+  const edges = [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+  ctx.lineWidth = Math.max(0.6, W / 500); ctx.strokeStyle = '#cfcfcf';
+  for (const [a, b] of edges) { ctx.beginPath(); ctx.moveTo(cx + cv[a][0]*scale, cy - cv[a][1]*scale); ctx.lineTo(cx + cv[b][0]*scale, cy - cv[b][1]*scale); ctx.stroke(); }
+  const faces = [];
+  e.cubes.forEach((q, qi) => {
+    const poly = sliceCube(q, axis, w); if (!poly) return;
+    const tv = poly.verts.map(T);
+    poly.faces.forEach((f, i) => {
+      const n = Tn(poly.normals[i]); if (n[2] <= 1e-6) return;
+      const depth = f.reduce((sm, k) => sm + tv[k][2], 0) / f.length;
+      const lam = Math.max(0, dot(n, LIGHT));
+      faces.push({ pts: f.map(k => tv[k]), depth, fill: col(qi, 34 + 52 * Math.pow(lam, 0.85)) });
+    });
+  });
+  faces.sort((a, b) => a.depth - b.depth);
+  ctx.lineJoin = 'round'; ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(0.7, W / 380);
+  for (const f of faces) {
+    ctx.beginPath(); f.pts.forEach((p, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, cx + p[0]*scale, cy - p[1]*scale)); ctx.closePath();
+    ctx.fillStyle = f.fill; ctx.fill(); ctx.stroke();
+  }
+}
+function drawTimeline(ctx, W, H, e, axis, w, opts = {}) {
+  const s = e.s, n = e.cubes.length, pad = 4;
+  const rows = e.cubes.map((q, i) => ({ i, iv: lifetime(q, axis) })).sort((a, b) => a.iv[0] - b.iv[0] || a.iv[1] - b.iv[1]);
+  ctx.clearRect(0, 0, W, H);
+  const top = pad, bot = H - (opts.axisLabels ? 26 : 6), rh = (bot - top) / n, x = t => pad + (W - 2*pad) * t / s;
+  ctx.fillStyle = '#f4f4f4'; ctx.fillRect(x(0), top, x(s) - x(0), bot - top);
+  rows.forEach((r, k) => {
+    const alive = w >= r.iv[0] && w <= r.iv[1];
+    ctx.fillStyle = col(r.i, alive ? 52 : 74);
+    ctx.fillRect(x(r.iv[0]), top + k * rh + rh * 0.12, x(r.iv[1]) - x(r.iv[0]), Math.max(1, rh * 0.76));
+  });
+  ctx.strokeStyle = '#999'; ctx.lineWidth = 1; ctx.strokeRect(x(0), top, x(s) - x(0), bot - top);
+  ctx.strokeStyle = '#c0392b'; ctx.lineWidth = opts.thick || 2;
+  ctx.beginPath(); ctx.moveTo(x(w), top - 2); ctx.lineTo(x(w), bot + 2); ctx.stroke();
+  if (opts.axisLabels) {
+    ctx.fillStyle = '#555'; ctx.font = `${opts.font || 22}px Times`; ctx.textBaseline = 'top';
+    ctx.textAlign = 'left'; ctx.fillText('time 0', x(0), bot + 4);
+    ctx.textAlign = 'right'; ctx.fillText(`s = ${s.toFixed(3)}`, x(s), bot + 4);
+    ctx.textAlign = 'center'; ctx.fillText('↑ one bar per tesseract', W / 2, bot + 4);
+  }
+}
+function drawProjection(ctx, W, e, rot4, yaw, pitch) {
+  const s = e.s, h = s / 2, M = viewMat(yaw, pitch), cam = 3.2 * s;
+  const ca = Math.cos(rot4), sa = Math.sin(rot4);
+  ctx.clearRect(0, 0, W, W);
+  const segs = [];
+  e.cubes.forEach((q, qi) => {
+    const V = [];
+    for (let m = 0; m < 16; m++) {
+      const t = [0,1,2,3].map(k => (m >> k & 1) ? 0.5 : -0.5);
+      let x = [0,1,2,3].map(i => q.c[i] - h + q.R[i][0]*t[0] + q.R[i][1]*t[1] + q.R[i][2]*t[2] + q.R[i][3]*t[3]);
+      x = [ca*x[0] - sa*x[3], x[1], x[2], sa*x[0] + ca*x[3]];
+      const f = cam / (cam - x[3]), y = [x[0]*f, x[2]*f, x[1]*f];
+      V.push({ p: [M[0][0]*y[0]+M[0][1]*y[1]+M[0][2]*y[2], M[1][0]*y[0]+M[1][1]*y[1]+M[1][2]*y[2]], w: x[3] });
+    }
+    for (let a = 0; a < 16; a++) for (let k = 0; k < 4; k++) { const b = a ^ (1 << k); if (b > a) segs.push([V[a], V[b], qi]); }
+  });
+  segs.sort((A, B) => (A[0].w + A[1].w) - (B[0].w + B[1].w));
+  const scale = W / (s * 2.2), cx = W / 2, cy = W / 2;
+  ctx.lineWidth = Math.max(0.8, W / 600);
+  for (const [a, b, qi] of segs) {
+    const wn = Math.min(1, Math.max(0, ((a.w + b.w) / 2 + h * 1.6) / (h * 3.2)));
+    ctx.strokeStyle = col(qi, 82 - 50 * wn);
+    ctx.beginPath(); ctx.moveTo(cx + a.p[0]*scale, cy - a.p[1]*scale); ctx.lineTo(cx + b.p[0]*scale, cy - b.p[1]*scale); ctx.stroke();
+  }
+}
+
+// ---------------------------------------------------------------- the 2D -> 1D explainer
+const EX = (() => { const s = 2 + Math.SQRT1_2, r = Math.SQRT1_2;
+  return { s, sq: [[.5, .5, 0], [s - .5, .5, 0], [.5, s - .5, 0], [s - .5, s - .5, 0], [s / 2, s / 2, Math.PI / 4]] }; })();
+function drawExplain(tNow) {
+  const P = 7000, ph = (tNow % P) / P, y = EX.s * ph;
+  const c2 = document.getElementById('ex2d').getContext('2d'), c1 = document.getElementById('ex1d').getContext('2d'), W = 600;
+  const pad = 40, sc = (W - 2 * pad) / EX.s, X = v => pad + v * sc, Y = v => W - pad - v * sc;
+  c2.clearRect(0, 0, W, W);
+  c2.lineWidth = 2; c2.strokeStyle = '#222'; c2.strokeRect(X(0), Y(EX.s), EX.s * sc, EX.s * sc);
+  const segs = [];
+  EX.sq.forEach(([cx, cy, th], i) => {
+    const co = Math.cos(th), si = Math.sin(th), pts = [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].map(([a, b]) => [cx + co*a - si*b, cy + si*a + co*b]);
+    c2.beginPath(); pts.forEach((p, k) => (k ? c2.lineTo : c2.moveTo).call(c2, X(p[0]), Y(p[1]))); c2.closePath();
+    c2.fillStyle = col(i, 70); c2.fill(); c2.strokeStyle = '#1a1a1a'; c2.lineWidth = 1.5; c2.stroke();
+    // intersection of the horizontal line with the square
+    const xs = [];
+    for (let k = 0; k < 4; k++) { const A = pts[k], B = pts[(k + 1) % 4];
+      if ((A[1] - y) * (B[1] - y) <= 0 && A[1] !== B[1]) xs.push(A[0] + (y - A[1]) / (B[1] - A[1]) * (B[0] - A[0])); }
+    if (xs.length >= 2) segs.push([Math.min(...xs), Math.max(...xs), i]);
+  });
+  c2.strokeStyle = '#c0392b'; c2.lineWidth = 3; c2.beginPath(); c2.moveTo(X(0) - 14, Y(y)); c2.lineTo(X(EX.s) + 14, Y(y)); c2.stroke();
+  c2.fillStyle = '#c0392b'; c2.font = '24px Times'; c2.fillText('time ↑', 4, Y(y) - 8);
+  // 1D view: the current row of segments, plus a fading trail of past rows (a "space-time" picture)
+  c1.clearRect(0, 0, W, W);
+  c1.fillStyle = '#555'; c1.font = '24px Times'; c1.textAlign = 'center'; c1.fillText('what the line sees now', W / 2, 70);
+  c1.strokeStyle = '#222'; c1.lineWidth = 2; c1.strokeRect(X(0), 100, EX.s * sc, 40);
+  for (const [a, b, i] of segs) { c1.fillStyle = col(i, 55); c1.fillRect(X(a), 102, (b - a) * sc, 36); }
+  c1.fillStyle = '#555'; c1.fillText(`${segs.length} segment${segs.length === 1 ? '' : 's'} at time ${y.toFixed(2)}`, W / 2, 180);
+  c1.fillText('Every 1D picture is easy,', W / 2, 300);
+  c1.fillText('but only the whole movie', W / 2, 335);
+  c1.fillText('shows the 2D packing.', W / 2, 370);
+  c1.fillText('Below: the same trick', W / 2, 450);
+  c1.fillText('turns 4D into 3D movies.', W / 2, 485);
+}
+
+// ---------------------------------------------------------------- page
+const fmtS = x => Math.abs(x - Math.round(x)) < 1e-12 ? String(Math.round(x)) : (+x).toFixed(6) + '+';
+function caption(e) {
+  const src = e.source || '';
+  if (/^grid/.test(src)) return ['Trivial (optimal).', e.n === 1 ? '' : (e.n <= 16 ? 'two cubes already need side 2' : 'optimal by volume')];
+  if (/^product of two optimal 5-square/.test(src)) return ['Product of two optimal 5-square packings.', 's = 2 + 1/√2'];
+  let m;
+  if ((m = src.match(/^product of (\d+)-square and (\d+)-square/))) {
+    const an = k => (/^(8|11|18)/.test(k) ? 'an' : 'a');
+    return [`Product of ${an(m[1])} ${m[1]}-square and ${an(m[2])} ${m[2]}-square 2D packing.`, '2D packings found by our search']; }
+  if ((m = src.match(/^(\d+)-cube 3D packing/))) return [`Two layers of a ${m[1]}-cube 3D packing.`, '3D packing found by our search'];
+  if (e.cited) return [`Friedman's 3D ${/13-cube/.test(src) ? 13 : 14}-cube packing, two layers.`,
+    e.alt ? `coordinates not public; shown: our best packing, s = ${(+e.alt.s).toFixed(4)}` : 'coordinates not public; no picture'];
+  if (/removed/.test(src)) return [`From the n = ${e.derived_from} packing.`, ''];
+  if (/engine/.test(src)) { const d = e.found_at ? new Date(e.found_at.replace(' ', 'T')) : null;
+    const how = /morph/.test(src) ? ' (blob→cube morph)' : '';
+    return [`Found by search${how}${d ? ' on ' + d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : ''}.`, ''] }
+  return [src, ''];
+}
+function groups(table) {
+  const keys = Object.keys(table).map(Number).sort((a, b) => a - b), out = [];
+  for (const n of keys) {
+    const e = table[n], last = out[out.length - 1];
+    if (last && Math.abs(table[last.hi].s - e.s) < 1e-9 && !/Friedman/.test(e.source) && !/Friedman/.test(table[last.hi].source)) last.hi = n;
+    else out.push({ lo: n, hi: n });
+  }
+  return out;
+}
+const movies = new Map();   // canvas -> {e}
+const visible = new Set();
+const io = new IntersectionObserver(es => es.forEach(x => x.isIntersecting ? visible.add(x.target) : visible.delete(x.target)), { rootMargin: '200px' });
+const PERIOD = 8000;
+const phaseW = (e, t) => { const ph = (t % PERIOD) / PERIOD; return e.s * Math.min(1, Math.max(0, (ph - 0.04) / 0.92)); };
+
+function render() {
+  const citedNs = [];
+  for (const [k, e] of Object.entries(LIVE.table)) if (e.cited) { citedNs.push([+k, e.s]); delete LIVE.table[k]; }   // no coordinates -> not shown
+  for (const [k, e] of Object.entries(LIVE.table)) if (!e.cubes) delete LIVE.table[k];
+  const L = LIVE, now = Date.now() / 1000, on = now - L.updated < 6;
+  document.getElementById('dot').className = 'dot' + (on ? ' on' : '');
+  const rate = Math.round(L.steps_per_sec).toLocaleString();
+  const nw = Object.values(L.workers).filter(w => w.state === 'running').length;
+  const running = Object.entries(L.workers).filter(([w, st]) => st.state === 'running' && st.n != null);
+  const searchingNs = new Set(on ? running.map(([w, st]) => st.n) : []);
+  document.getElementById('livetxt').innerHTML = on
+    ? `Live: ${nw} CPU cores, each searching its own n · ${rate} configurations/s · <a href="#status">status &amp; research notebook ↓</a>`
+    : `Engine not running. Showing saved results from ${new Date(L.updated*1000).toLocaleString()}.`;
+  document.getElementById('bar').style.display = 'none';
+  // per-core panel
+  const nowS = Date.now() / 1000;
+  document.getElementById('cores').innerHTML = !on ? '' :
+    '<div class="row head"><span>core</span><span>n</span><span>progress</span><span>best this run</span><span>record</span><span></span></div>' +
+    Object.entries(L.workers).sort((a, b) => a[0] - b[0]).map(([w, st]) => {
+      if (st.state !== 'running' || st.n == null) return `<div class="row"><span>${+w + 1}</span><span>–</span><span class="mono">${st.state}</span><span></span><span></span><span></span></div>`;
+      const rec = L.table[st.n] ? L.table[st.n].s : null, tb = st.task_best;
+      const left = Math.max(0, (st.deadline || 0) - nowS), frac = Math.min(1, 1 - left / ((st.minutes || L.minutes_per_n) * 60));
+      const ahead = tb != null && rec != null && tb <= rec + 1e-9;
+      return `<div class="row"><span>${+w + 1}</span><span><b>${st.n}</b>${(st.minutes || 1) > 1 ? ` <span class="small" title="long search">⏱${Math.round(st.minutes)}m</span>` : ''}</span>` +
+        `<span><div class="pbar"><div style="width:${(100 * frac).toFixed(0)}%"></div></div></span>` +
+        `<span class="mono">${tb != null ? (+tb).toFixed(6) : 'not yet valid'}</span><span class="mono">${rec != null ? (+rec).toFixed(6) : ''}</span>` +
+        `<span class="${ahead ? 'ahead' : ''}">${ahead ? 'record!' : ''}</span></div>`; }).join('');
+  // research notebook
+  if (PLAN) {
+    document.getElementById('nb-note').textContent = PLAN.note || '';
+    const taken = new Set(L.plan_taken || []);
+    const items = (PLAN.queue || []).map(q => {
+      const now = searchingNs.has(q.n), done = taken.has(q.n) && !now;
+      return { now, done, html: `<li class="${now ? 'now' : ''}"><b>n = ${q.n}</b> <span class="st">${now ? '● searching now' : done ? '✓ searched this round' : 'next up'}</span><br>${q.why}</li>` }; });
+    const upNext = items.filter(x => !x.now && !x.done).slice(0, 4);
+    document.getElementById('nb-queue').innerHTML =
+      '<p class="small" style="margin:6px 0 0"><b>Next up</b></p>' + (upNext.length ? upNext.map(x => x.html).join('') : '<li>(plan cycling: every entry searched this round)</li>') +
+      `<details><summary class="small">Full plan (${items.length} entries, ${items.filter(x => x.now).length} searching now)</summary>${items.map(x => x.html).join('')}</details>`;
+    document.getElementById('nb-ins').innerHTML = (PLAN.insights || []).map(x => `<li>${x}</li>`).join('');
+  }
+  const imp = L.events.filter(x => /->/.test(x)).slice(-1)[0];
+  document.getElementById('news').innerHTML = imp ? 'Latest record: <b>' + imp.replace(/\(.*\)/, '').replace('->', '→') + '</b>' : '';
+
+  const grid = document.getElementById('grid'), seen = new Set();
+  const isGrid = n => /^grid/.test(L.table[n].source || '');
+  const provedTrivial = n => n === 1 || (n >= 2 && n <= 16) || Number.isInteger(Math.round(Math.pow(n, 0.25))) && Math.round(Math.pow(n, 0.25)) ** 4 === n;
+  const shown = {}, hidden = [];
+  for (const [k, v] of Object.entries(L.table)) { const n = +k; if (isGrid(n) && !provedTrivial(n)) hidden.push(n); else shown[k] = v; }
+  const G = groups(shown);
+  const ranges = []; hidden.sort((a, b) => a - b).forEach(n => { const r = ranges[ranges.length - 1]; if (r && r[1] === n - 1) r[1] = n; else ranges.push([n, n]); });
+  document.getElementById('trivnote').innerHTML = (hidden.length ? `For n = ${ranges.map(([a, b]) => a === b ? a : a + '–' + b).join(', ')}, the best known packing is still the trivial grid (s = ⌈n<sup>1/4</sup>⌉), which is not shown.` : '') +
+    (citedNs.length ? `<br>Not shown: n = ${citedNs.map(x => x[0]).join(', ')}, where the best bound (s ≤ ${[...new Set(citedNs.map(x => (+x[1]).toFixed(5)))].join(', ')}) comes from Friedman's 3D packings stacked in two layers. We don't have those coordinates; the search is trying to beat them.` : '');
+  G.forEach((g, gi) => {
+    const id = 'g' + g.lo, e = L.table[g.hi]; seen.add(id);
+    const inG = [...searchingNs].filter(x => x >= g.lo && x <= g.hi).sort((a, b) => a - b);
+    const searching = inG.length > 0;
+    const key = [g.hi, e.s, inG.join(',')].join('|');
+    let cell = document.getElementById(id);
+    if (!cell) { cell = document.createElement('div'); cell.id = id; grid.appendChild(cell); }
+    if (grid.children[gi] !== cell) grid.insertBefore(cell, grid.children[gi]);
+    if (cell.dataset.key === key) return;
+    const improved = cell.dataset.key && cell.dataset.key.split('|')[1] !== String(e.s);
+    cell.dataset.key = key;
+    const [who, note] = caption(e), lab = g.lo === g.hi ? `${g.lo}.` : `${g.lo}–${g.hi}.`;
+    cell.className = 'cell' + (searching ? ' searching' : '') + (improved ? ' flash' : '');
+    cell.querySelectorAll('canvas.mv').forEach(c => { io.unobserve(c); movies.delete(c); visible.delete(c); });
+    const pic = e.cubes ? e : (e.alt && e.alt.cubes ? e.alt : null);
+    const tlH = Math.max(40, Math.min(110, 6 * (pic ? pic.cubes.length : 0) || 40));
+    cell.innerHTML = `<div class="lab">${lab}</div>` +
+      (pic ? `<canvas class="mv" width="480" height="480"></canvas><canvas class="tl" width="480" height="${tlH * 2}" style="height:${tlH}px"></canvas>`
+           : `<div class="nopic">no coordinates available for this bound</div>`) +
+      `<div class="cap">s = ${fmtS(e.s)}</div><div class="who">${who}</div>` +
+      `<div class="note">${searching ? (g.lo === g.hi ? 'searching now…' : `searching n = ${inG.join(', ')} now…`) : note}</div>`;
+    if (pic) { const mv = cell.querySelector('canvas.mv'), tl = cell.querySelector('canvas.tl'); movies.set(mv, { e: pic, tl }); io.observe(mv);
+      const w0 = phaseW(pic, performance.now());              // static first frame, independent of the animation loop
+      drawSlice(mv.getContext('2d'), 480, pic, 3, w0, -0.62, 0.42); drawTimeline(tl.getContext('2d'), 480, tl.height, pic, 3, w0, { thick: 3 }); }
+    cell.onclick = () => pic && openViewer(g.hi, lab, pic);
+  });
+  [...grid.children].forEach(c => { if (!seen.has(c.id)) c.remove(); });
+
+  {  // results table, grouped like the pictures
+    const rows = [];
+    Object.keys(L.table).map(Number).sort((x, y) => x - y).filter(n => n >= 17 && !(isGrid(n) && !provedTrivial(n))).forEach(n => {
+      const e = L.table[n], r = rows[rows.length - 1];
+      if (r && r.hi === n - 1 && Math.abs(r.s - e.s) < 1e-9 && r.how === caption(e)[0]) { r.hi = n; r.lb2 = e.lower; }
+      else rows.push({ lo: n, hi: n, s: e.s, lb: e.lower, lb2: e.lower, how: caption(e)[0] }); });
+    document.getElementById('tbl').innerHTML = '<tr><th class="l">n</th><th>best s</th><th>lower bound (volume)</th><th class="l">how</th></tr>' +
+      rows.map(r => { const hit = [...searchingNs].some(x => x >= r.lo && x <= r.hi);
+        return `<tr${hit ? ' style="background:var(--hi)"' : ''}><td class="l">${r.lo === r.hi ? r.lo : r.lo + '–' + r.hi}</td><td>${(+r.s).toFixed(6)}</td>` +
+          `<td>${r.lo === r.hi ? (+r.lb).toFixed(4) : (+r.lb).toFixed(4) + '–' + (+r.lb2).toFixed(4)}</td><td class="l">${r.how}</td></tr>`; }).join('');
+  }
+  document.getElementById('log').textContent = L.events.slice().reverse().join('\n');
+  if (CUR && document.getElementById('dlg').open) { const e = L.table[CUR.n]; if (e && e.cubes && e.s !== CUR.e.s) { CUR.e = e; } }
+}
+
+// one animation loop for everything
+let lastFrame = 0;
+function frame(t) {
+  requestAnimationFrame(frame);
+  if (t - lastFrame < 45) return; lastFrame = t;
+  drawExplain(t);
+  for (const cv of visible) {
+    const m = movies.get(cv); if (!m) continue;
+    const w = phaseW(m.e, t);
+    drawSlice(cv.getContext('2d'), 480, m.e, 3, w, -0.62, 0.42);
+    drawTimeline(m.tl.getContext('2d'), 480, m.tl.height, m.e, 3, w, { thick: 3 });
+  }
+  if (CUR && document.getElementById('dlg').open) {
+    if (CUR.playing && CUR.mode === 'slice') CUR.w = (CUR.w + CUR.e.s * 45 / PERIOD) % CUR.e.s;
+    vdraw();
+  }
+}
+requestAnimationFrame(frame);
+drawExplain(1500);
+
+// ---------------------------------------------------------------- viewer
+const vc = document.getElementById('vc'), vctx = vc.getContext('2d'), vtl = document.getElementById('vtl');
+function openViewer(n, lab, pic) {
+  CUR = { n, e: pic || LIVE.table[n], yaw: -0.62, pitch: 0.42, mode: 'slice', axis: 3, playing: true, spin: false, w: 0 };
+  document.getElementById('vt').textContent = lab;
+  document.getElementById('play').textContent = '❚❚ pause';
+  document.getElementById('dlg').showModal();
+}
+function vdraw() {
+  const e = CUR.e;
+  document.getElementById('vs').textContent = `s = ${(+e.s).toFixed(9)}`;
+  const tilted = e.cubes.filter(q => { const iv = lifetime(q, CUR.axis); return iv[1] - iv[0] > 1 + 1e-4; }).length;
+  document.getElementById('vinfo').innerHTML = `${e.cubes.length} tesseracts. ${tilted} are tilted in the time direction (bars longer than 1).<br>${e.source}`;
+  document.getElementById('wv').textContent = CUR.w.toFixed(3); document.getElementById('smax').textContent = e.s.toFixed(3);
+  if (CUR.mode === 'slice') {
+    drawSlice(vctx, 1200, e, CUR.axis, CUR.w, CUR.yaw, CUR.pitch);
+    vtl.style.display = '';
+    const H = Math.max(160, Math.min(520, e.cubes.length * 14)); if (vtl.height !== H) vtl.height = H;
+    drawTimeline(vtl.getContext('2d'), 1200, H, e, CUR.axis, CUR.w, { axisLabels: true, thick: 3, font: 26 });
+  } else {
+    vtl.style.display = 'none';
+    if (CUR.spin) CUR.rot = ((CUR.rot || 0) + 0.004) % Math.PI, document.getElementById('rot4').value = Math.round(CUR.rot / Math.PI * 1000);
+    drawProjection(vctx, 1200, e, document.getElementById('rot4').value / 1000 * Math.PI, CUR.yaw, CUR.pitch);
+  }
+}
+document.getElementById('rot4').oninput = () => { CUR.rot = document.getElementById('rot4').value / 1000 * Math.PI; };
+document.getElementById('vx').onclick = () => document.getElementById('dlg').close();
+document.getElementById('vdl').onclick = () => { const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(CUR.e, null, 1)], { type: 'application/json' })); a.download = `tesseracts_n${CUR.n}.json`; a.click(); };
+document.getElementById('m-slice').onclick = () => setMode('slice');
+document.getElementById('m-proj').onclick = () => setMode('proj');
+function setMode(m) { CUR.mode = m; document.getElementById('m-slice').className = m === 'slice' ? 'on' : ''; document.getElementById('m-proj').className = m === 'proj' ? 'on' : '';
+  document.getElementById('slicectl').style.display = m === 'slice' ? '' : 'none'; document.getElementById('projctl').style.display = m === 'proj' ? '' : 'none'; }
+document.querySelectorAll('#axes button').forEach(b => b.onclick = () => { CUR.axis = +b.dataset.a;
+  document.querySelectorAll('#axes button').forEach(x => x.className = x === b ? 'on' : ''); });
+document.getElementById('play').onclick = ev => { CUR.playing = !CUR.playing; ev.target.textContent = CUR.playing ? '❚❚ pause' : '▶ play'; };
+document.getElementById('spin').onclick = ev => { CUR.spin = !CUR.spin; ev.target.textContent = CUR.spin ? '❚❚ stop' : '▶ spin'; };
+let drag = null;
+vc.addEventListener('pointerdown', ev => { drag = [ev.clientX, ev.clientY, CUR.yaw, CUR.pitch]; vc.setPointerCapture(ev.pointerId); vc.style.cursor = 'grabbing'; });
+vc.addEventListener('pointermove', ev => { if (!drag) return; CUR.yaw = drag[2] + (ev.clientX - drag[0]) * 0.01;
+  CUR.pitch = Math.max(-1.4, Math.min(1.4, drag[3] + (ev.clientY - drag[1]) * 0.01)); });
+vc.addEventListener('pointerup', () => { drag = null; vc.style.cursor = 'grab'; });
+let scrub = false;
+const scrubTo = ev => { const r = vtl.getBoundingClientRect(), f = (ev.clientX - r.left) / r.width;
+  CUR.w = Math.min(CUR.e.s, Math.max(0, (f * 1200 - 4) / (1200 - 8) * CUR.e.s)); CUR.playing = false; document.getElementById('play').textContent = '▶ play'; };
+vtl.addEventListener('pointerdown', ev => { scrub = true; vtl.setPointerCapture(ev.pointerId); scrubTo(ev); });
+vtl.addEventListener('pointermove', ev => { if (scrub) scrubTo(ev); });
+vtl.addEventListener('pointerup', () => { scrub = false; });
+
+// ---------------------------------------------------------------- polling
+let PLAN = null;
+async function pollPlan() { try { const r = await fetch('/plan.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) PLAN = await r.json(); } catch (e) {} }
+pollPlan(); setInterval(pollPlan, 5000);
+async function poll() {
+  try { const r = await fetch('/results/live.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) { LIVE = await r.json(); render(); } }
+  catch (err) { document.getElementById('dot').className = 'dot'; document.getElementById('livetxt').textContent = 'Cannot reach the local server (is src/engine.py or src/serve.py running?).'; }
+}
+poll(); setInterval(poll, 2000);
+</script>
+</body>
+</html>
