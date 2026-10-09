@@ -425,6 +425,9 @@ def main():
         if not ok:
             log(f"n={m_n}: candidate s={cfg_s:.6f} failed certification (sep {sep:.1e}) – discarded"); return False
         if s_cert >= table[m_n]["s"] - 1e-9: return False
+        if D == 4 and any("p" not in q for q in cubes):    # imported packings: fit the quaternion parameters workers need
+            ps, err = fit_p([q["R"] for q in cubes])
+            cubes = [{**q, "p": pp} for q, pp in zip(cubes, ps)]
         old = table[m_n]["s"]
         table[m_n] = {"n": m_n, "s": s_cert, "cubes": cubes, "certified": True, "source": how,
                       "found_at": time.strftime("%Y-%m-%d %H:%M:%S"), "cert": {"min_pair_separation": sep},
