@@ -62,3 +62,11 @@ Each entry gives the hypothesis, the setup, the result and the decision. All tim
   | 82 | 129 | 3,172 | 5,380 |
 - **Validation run:** 2 cores, from scratch, 1.5 min. Reached n = 17: 2.5792 and n = 26: 2.9476, which beat production's 26.
 - **Decision:** production switched to `--native` at 14:26. Production throughput went from ~17k to ~398k config-steps/s. Within 2 minutes it took n = 28 below the 2.98995 bound and n = 29 below s = 3.
+
+## V1: Independent check of hockyy/tesseract-packing claims — 15:09
+- Read their 5 public result files (n = 26–30; kept in scratch for checking only, not copied into this repo) and ran our `geometry.certify`. That's an LP separating hyperplane per pair, plus checks that every vertex is in the box and that each R is orthonormal.
+- **Result:** all 5 pass in double precision.
+  - Orthogonality error ≤ 4e-16.
+  - Container violation ≤ 4e-15 (floating-point noise).
+  - Minimum pair separation 0. The packings are tight: cubes touch.
+- **Status:** claims verified to double precision by an independent checker. Not an exact certificate (neither are ours).

@@ -119,6 +119,7 @@ button.on { background: #222; color: #fff; }
     <h2>Research notebook</h2>
     <p class="nbnote" id="nb-note"></p>
     <ol id="nb-queue"></ol>
+    <div id="nb-exps"></div>
     <ul id="nb-ins"></ul>
   </div>
   <p class="small">Engine log</p>
@@ -407,6 +408,22 @@ function render() {
         `<span><div class="pbar"><div style="width:${(100 * frac).toFixed(0)}%"></div></div></span>` +
         `<span class="mono">${tb != null ? (+tb).toFixed(6) : 'not yet valid'}</span><span class="mono">${rec != null ? (+rec).toFixed(6) : ''}</span>` +
         `<span class="${ahead ? 'ahead' : ''}">${ahead ? 'record!' : ''}</span></div>`; }).join('');
+  // research / experiment cores (separate engines, up to 4 cores)
+  const RS = (L.research || []);
+  if (on && RS.length) {
+    document.getElementById('cores').innerHTML += '<div class="row head" style="margin-top:10px"><span>research</span><span>n</span><span>progress</span><span>best this run</span><span>record there</span><span></span></div>' +
+      RS.map((r, i) => {
+        const left = Math.max(0, (r.deadline || 0) - nowS), frac = Math.min(1, 1 - left / ((r.minutes || 1) * 60));
+        return `<div class="row"><span>R${i + 1}</span><span><b>${r.n}</b> <span class="small" style="color:var(--muted)">${r.dim !== 4 ? r.dim + 'D · ' : ''}${+(r.minutes || 1).toFixed(1)} min</span></span>` +
+          `<span><div class="pbar"><div style="width:${(100 * frac).toFixed(0)}%;background:#6a8fc7"></div></div></span>` +
+          `<span class="mono">${r.task_best != null ? (+r.task_best).toFixed(6) : 'not yet valid'}</span><span class="mono">${r.record != null ? (+r.record).toFixed(6) : ''}</span><span></span></div>` +
+          `<div class="row" style="grid-template-columns:52px 1fr;border-bottom:1px solid #eee"><span></span><span class="small" style="color:var(--muted)">${r.label || r.dir}${r.strategies ? ' · strategies: ' + r.strategies : ''}</span></div>`; }).join('');
+  }
+  // experiments in the notebook
+  const exps = [...new Map(RS.map(r => [r.dir, r])).values()];
+  document.getElementById('nb-exps').innerHTML = exps.length
+    ? '<p class="small" style="margin:8px 0 2px"><b>Experiments running now</b> (research cores)</p><ul style="margin:0">' + exps.map(r => `<li>${r.label || r.dir} <span class="small" style="color:var(--muted)">(${r.dim}D, n = ${r.n})</span></li>`).join('') + '</ul>'
+    : '<p class="small" style="margin:8px 0 2px;color:var(--muted)">No experiments running right now.</p>';
   // research notebook
   if (PLAN) {
     document.getElementById('nb-note').textContent = PLAN.note || '';

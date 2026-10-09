@@ -328,6 +328,7 @@ def main():
     ap.add_argument("--morph-noise", type=float, default=0.0, help="annealing noise amplitude during morph")
     ap.add_argument("--native", action="store_true", help="use the C kernel (D=4, CPU)")
     ap.add_argument("--hit-s", type=float, default=None, help="experiments: count starts that reach s <= this")
+    ap.add_argument("--label", default="", help="one-line description of this run (shown on the website for experiments)")
     ap.add_argument("--dim", type=int, default=4)
     ap.add_argument("--strategies", default=",".join(STRATS))
     ap.add_argument("--results", default="results", help="results directory (relative to repo)")
@@ -557,7 +558,23 @@ def slim(n, e):
 
 def write_live(args, D, ns, table, workers, events, t_start, searches):
     rate = sum(w.get("steps_per_sec", 0) for w in workers.values() if w.get("state") == "running")
-    live = {"dim": D, "ns": ns, "mode": "farm", "minutes_per_n": args.minutes,
+    research = []
+    if args.results == "results":           # production: collect the status of experiment / auxiliary runs
+        import glob
+        for path in glob.glob(os.path.join(ROOT, "results_*", "live.json")):
+            try:
+                R = json.load(open(path))
+                if time.time() - R.get("updated", 0) > 15: continue
+                for w, st in R.get("workers", {}).items():
+                    if st.get("state") != "running": continue
+                    rec = R.get("table", {}).get(str(st.get("n")), {}).get("s")
+                    research.append({"dir": os.path.basename(os.path.dirname(path)), "label": R.get("label", ""), "dim": R.get("dim", 4),
+                                     "n": st.get("n"), "task_best": st.get("task_best"), "deadline": st.get("deadline"),
+                                     "minutes": st.get("minutes"), "record": rec, "strategies": R.get("strategies", "")})
+            except Exception:
+                pass
+    live = {"dim": D, "ns": ns, "mode": "farm", "minutes_per_n": args.minutes, "label": args.label, "strategies": args.strategies,
+            "research": research,
             "updated": time.time(), "started": t_start, "uptime": time.time() - t_start,
             "workers": workers, "steps_per_sec": rate, "events": events[-80:], "searches": searches,
             "plan_taken": args.plan_state["taken"] if hasattr(args, "plan_state") else [],

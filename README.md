@@ -37,7 +37,7 @@ A cube is `c + R·[-1/2, 1/2]^4`, where the columns of R are the cube's axes; th
 
 ## Related work
 
-- **[hockyy/tesseract-packing](https://github.com/hockyy/tesseract-packing)** (Oct 9, 2026, concurrent and independent; live page at packing.mikira.id). Same problem. They report n = 26–29 at ≈2.9428 (26 conjecturally 2 + 2√2/3) and n = 30 at 2.98957. The structure is the 25-cube product frame with extra cubes in "cross cells". Those are better than our values for 26–30.
+- **[hockyy/tesseract-packing](https://github.com/hockyy/tesseract-packing)** (Oct 9, 2026, concurrent and independent; live page at packing.mikira.id). Same problem. They report n = 26–29 at ≈2.9428 (26 conjecturally 2 + 2√2/3) and n = 30 at 2.98957. We independently re-checked their 5 published packings with our certifier: all valid in double precision (not exact certificates — same standard as ours). The structure is the 25-cube product frame with extra cubes in "cross cells". Those are better than our values for 26–30.
 - **[yoheinakajima/soft-to-rigid-packing](https://github.com/yoheinakajima/soft-to-rigid-packing)** (Oct 8, 2026): the ball → rounded cube → cube "morph" method, with a 3D record for n = 12 (2.93152). Our engine has a morph strategy inspired by it.
 - Erich Friedman, [Cubes in Cubes](https://erich-friedman.github.io/packing/cubincub/) and the [Squares in Squares survey](https://www.combinatorics.org/ojs/index.php/eljc/article/view/DS7). These are the 2D/3D baselines used for products and lifts.
 - Januszewski & Zielonka (2024), *Packing of non-blocking four-dimensional cubes into the unit cube*, and Meir–Moser (1968). These concern a different problem: volume guarantees for upright cubes of different sizes.
