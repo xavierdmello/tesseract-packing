@@ -455,7 +455,11 @@ def main():
                         improved_last[n] = imp; streak[n] = streak.get(n, 0) + 1 if imp else 0
                         table[n]["search"] = {"tasks": searches[n], "last": time.strftime("%Y-%m-%d %H:%M:%S"),
                                               "start_s": table[n].get("search", {}).get("start_s", a["s_before"]) if table[n].get("search") else a["s_before"]}
-                        log(f"worker {wid}: n={n} done, {'IMPROVED to %.6f' % table[n]['s'] if imp else 'no improvement'} (searched {searches[n]}x)")
+                        wst = workers.get(wid, {})
+                        hs = {k: f"{wst.get('hits', {}).get(k, 0)}/{v}" for k, v in wst.get('ends', {}).items() if v}
+                        tb = wst.get('task_best')
+                        log(f"worker {wid}: n={n} done, {'IMPROVED to %.6f' % table[n]['s'] if imp else 'no improvement'} "
+                            f"(task best {('%.6f' % tb) if tb else '–'}, hits/starts {hs or '–'}, searched {searches[n]}x)")
                     workers[wid] = {**workers.get(wid, {}), "state": "waiting"}
                     assign()
                 elif kind == "error":
