@@ -398,7 +398,11 @@ def main():
         for e in q:                                    # plan exhausted: cycle until the researcher updates it
             if ok(e):
                 plan_state["taken"] = [e["n"]]; return e["n"], mins_of(e)
-        return (q[0]["n"] if q else ns[0]), args.minutes
+        for e in q:                                    # long slots full: run a free plan entry as a short task
+            if e["n"] not in busy:
+                return e["n"], args.minutes
+        free = [n for n in ns if n not in busy]        # never put two workers on the same n
+        return (free[0] if free else ns[0]), args.minutes
 
     def assign():
         n, mins = next_task()

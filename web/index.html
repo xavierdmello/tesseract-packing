@@ -49,7 +49,7 @@ td.l, th.l { text-align: left; }
 .small { font-size: 15px; }
 #log { font-family: Menlo, monospace; font-size: 12px; max-height: 210px; overflow: auto; white-space: pre-wrap; color: #333; border: 1px solid #e3e3e3; padding: 6px 8px; }
 #cores { max-width: 760px; margin: 10px auto 0; font-size: 15px; }
-#cores .row { display: grid; grid-template-columns: 62px 58px 1fr 104px 104px 62px; gap: 8px; align-items: center; padding: 2px 0; border-bottom: 1px solid #eee; }
+#cores .row { display: grid; grid-template-columns: 52px 96px 1fr 104px 104px 62px; gap: 8px; align-items: center; padding: 2px 0; border-bottom: 1px solid #eee; }
 #cores .row.head { color: var(--muted); font-size: 14px; }
 #cores .pbar { height: 6px; background: #eee; }
 #cores .pbar > div { height: 6px; background: #888; }
@@ -386,7 +386,7 @@ function render() {
       const rec = L.table[st.n] ? L.table[st.n].s : null, tb = st.task_best;
       const left = Math.max(0, (st.deadline || 0) - nowS), frac = Math.min(1, 1 - left / ((st.minutes || L.minutes_per_n) * 60));
       const ahead = tb != null && rec != null && tb <= rec + 1e-9;
-      return `<div class="row"><span>${+w + 1}</span><span><b>${st.n}</b>${(st.minutes || 1) > 1 ? ` <span class="small" title="long search">⏱${Math.round(st.minutes)}m</span>` : ''}</span>` +
+      return `<div class="row"><span>${+w + 1}</span><span><b>${st.n}</b> <span class="small" style="color:var(--muted)">${+(st.minutes || 1).toFixed(1)} min</span></span>` +
         `<span><div class="pbar"><div style="width:${(100 * frac).toFixed(0)}%"></div></div></span>` +
         `<span class="mono">${tb != null ? (+tb).toFixed(6) : 'not yet valid'}</span><span class="mono">${rec != null ? (+rec).toFixed(6) : ''}</span>` +
         `<span class="${ahead ? 'ahead' : ''}">${ahead ? 'record!' : ''}</span></div>`; }).join('');
@@ -396,7 +396,7 @@ function render() {
     const taken = new Set(L.plan_taken || []);
     const items = (PLAN.queue || []).map(q => {
       const now = searchingNs.has(q.n), done = taken.has(q.n) && !now;
-      return { now, done, html: `<li class="${now ? 'now' : ''}"><b>n = ${q.n}</b> <span class="st">${now ? '● searching now' : done ? '✓ searched this round' : 'next up'}</span><br>${q.why}</li>` }; });
+      return { now, done, html: `<li class="${now ? 'now' : ''}"><b>n = ${q.n}</b> · ${+(q.minutes || 1)} min <span class="st">${now ? '● searching now' : done ? '✓ searched this round' : 'next up'}</span><br>${q.why}</li>` }; });
     const upNext = items.filter(x => !x.now && !x.done).slice(0, 4);
     document.getElementById('nb-queue').innerHTML =
       '<p class="small" style="margin:6px 0 0"><b>Next up</b></p>' + (upNext.length ? upNext.map(x => x.html).join('') : '<li>(plan cycling: every entry searched this round)</li>') +
