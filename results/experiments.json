@@ -1,20 +1,94 @@
 {
-  "updated": "2026-10-09 15:48",
-  "gist": "8 production cores run the promoted main algorithm; 4 research cores run experiments. A candidate that beats production is promoted to main.",
-  "experiments": [
-    {"id": "X2", "name": "grow past hockyy's n=30 (2.989568): 6th+ cross cell on the opened 25-frame - first sub-3.0 at n=31-33?", "ns": "31,32,33", "cores": 4, "started": "15:47",
-     "best": null, "target": 2.9995, "status": "running",
-     "note": "30 min, our engine (grow/best/seed) seeded with their certified n=30; sub-3.0 results go straight to production"},
-    {"id": "E9", "name": "hockyy pipeline reproduction from scratch (their seeds + AL polish + basin hop, built from their public repo)", "ns": "26,27,28,30", "cores": 4, "started": "15:36",
-     "best": 2.942812, "target": 2.942809, "status": "done",
-     "note": "VERDICT: matches to 3e-6 at n=26 in 3 min (27-28 within 7e-4); their published files stay best; n=30 from scratch stalls at 3.0000000001 - their exact seed choice matters. Algo promoted for the 26-33 frontier"},
-    {"id": "E9.import", "name": "import + independent re-certification of hockyy's 5 published packings (our LP certifier)", "ns": "26-30", "cores": 0, "started": "15:33",
-     "best": 2.942809042, "target": 2.942809042, "status": "done",
-     "note": "MATCHED: all 5 certified and now our official records (15:42), credited to hockyy/tesseract-packing"},
-    {"id": "X1", "name": "jitter-polish the imported packings (production 8 cores, best/shrink on the new records)", "ns": "26-30", "cores": 8, "started": "15:43",
-     "best": null, "target": 2.942809042, "status": "running", "note": "any 1e-4 shave beats hockyy; running as part of the production plan"},
-    {"id": "E8", "name": "structured seed strategy (theory_seeds) on n=30,31", "ns": "30,31", "cores": 0, "started": "15:02", "best": 3.000014, "target": 2.989568, "status": "done", "note": "negative: rough cross-cell seeds + Adam don't reach hockyy's 30; motivated E9"},
-    {"id": "E7", "name": "native C kernel A/B (checked vs torch autograd to 3e-14)", "ns": "17,30,82", "cores": 0, "started": "14:22", "best": null, "target": null, "status": "promoted", "note": "PROMOTED 14:26: 25-50x faster; production runs --native since"},
-    {"id": "E6", "name": "fair morph test v2 (2D n=11, Yohei benchmark)", "ns": "11 (2D)", "cores": 0, "started": "14:14", "best": 3.8865, "target": 3.8771, "status": "done", "note": "morph 3.8865 vs random 3.8877 - inconclusive; morph keeps a small exploration share"}
-  ]
+ "updated": "2026-10-09 15:56",
+ "gist": "8 production cores run the promoted main algorithm; 4 research cores run experiments. A candidate that beats production is promoted to main.",
+ "experiments": [
+  {
+   "id": "P1",
+   "name": "PROMOTED to main: hockyy's augmented-Lagrangian + L-BFGS polish now runs on every record candidate (all 8 production cores + all imports), via src/polish_bridge.py",
+   "ns": "all",
+   "cores": 8,
+   "started": "15:55",
+   "best": 3.735816,
+   "target": 3.773719,
+   "status": "promoted",
+   "note": "first test: our n=101 record 3.773719 -> 3.735816 (-0.038). Failures fall back to the raw candidate; nothing uncertified can enter"
+  },
+  {
+   "id": "X2",
+   "name": "grow past hockyy's n=30 (2.989568): 6th+ cross cell on the opened 25-frame - first sub-3.0 at n=31-33?",
+   "ns": "31,32,33",
+   "cores": 4,
+   "started": "15:47",
+   "best": null,
+   "target": 2.9995,
+   "status": "running",
+   "note": "running with old code (no polish); its finds get polished when production imports them"
+  },
+  {
+   "id": "E9",
+   "name": "hockyy pipeline reproduction from scratch (their seeds + AL polish + basin hop, built from their public repo)",
+   "ns": "26,27,28,30",
+   "cores": 4,
+   "started": "15:36",
+   "best": 2.942812,
+   "target": 2.942809,
+   "status": "done",
+   "note": "VERDICT: matches to 3e-6 at n=26 in 3 min (27-28 within 7e-4); their published files stay best; n=30 from scratch stalls at 3.0000000001 - their exact seed choice matters. Algo promoted for the 26-33 frontier"
+  },
+  {
+   "id": "E9.import",
+   "name": "import + independent re-certification of hockyy's 5 published packings (our LP certifier)",
+   "ns": "26-30",
+   "cores": 0,
+   "started": "15:33",
+   "best": 2.942809042,
+   "target": 2.942809042,
+   "status": "done",
+   "note": "MATCHED: all 5 certified and now our official records (15:42), credited to hockyy/tesseract-packing"
+  },
+  {
+   "id": "X1",
+   "name": "jitter-polish the imported packings (production 8 cores, best/shrink on the new records)",
+   "ns": "26-30",
+   "cores": 8,
+   "started": "15:43",
+   "best": null,
+   "target": 2.942809042,
+   "status": "running",
+   "note": "any 1e-4 shave beats hockyy; running as part of the production plan"
+  },
+  {
+   "id": "E8",
+   "name": "structured seed strategy (theory_seeds) on n=30,31",
+   "ns": "30,31",
+   "cores": 0,
+   "started": "15:02",
+   "best": 3.000014,
+   "target": 2.989568,
+   "status": "done",
+   "note": "negative: rough cross-cell seeds + Adam don't reach hockyy's 30; motivated E9"
+  },
+  {
+   "id": "E7",
+   "name": "native C kernel A/B (checked vs torch autograd to 3e-14)",
+   "ns": "17,30,82",
+   "cores": 0,
+   "started": "14:22",
+   "best": null,
+   "target": null,
+   "status": "promoted",
+   "note": "PROMOTED 14:26: 25-50x faster; production runs --native since"
+  },
+  {
+   "id": "E6",
+   "name": "fair morph test v2 (2D n=11, Yohei benchmark)",
+   "ns": "11 (2D)",
+   "cores": 0,
+   "started": "14:14",
+   "best": 3.8865,
+   "target": 3.8771,
+   "status": "done",
+   "note": "morph 3.8865 vs random 3.8877 - inconclusive; morph keeps a small exploration share"
+  }
+ ]
 }
