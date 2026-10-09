@@ -1,0 +1,16 @@
+{
+  "updated": "2026-10-09 15:45",
+  "gist": "8 production cores run the promoted main algorithm; 4 research cores run experiments. A candidate that beats production is promoted to main.",
+  "experiments": [
+    {"id": "E9", "name": "hockyy pipeline reproduction (their seeds + augmented-Lagrangian polish + basin hopping, built from their public repo)", "ns": "26,27,28,30 then 29", "cores": 4, "started": "15:36",
+     "best": 2.942876855667, "target": 2.942809042, "status": "running",
+     "note": "goal: reproduce their 2.9428/2.98957 from scratch, then beat; certified imports feed production automatically"},
+    {"id": "E9.import", "name": "independent re-certification of hockyy's 5 published packings (our LP certifier)", "ns": "26-30", "cores": 0, "started": "15:33",
+     "best": 2.942809042, "target": 2.942809042, "status": "done",
+     "note": "all 5 pass at double precision (R row-major); already better than our 26-28 records - importing"},
+    {"id": "E8", "name": "structured seed strategy (theory_seeds) on n=30,31", "ns": "30,31", "cores": 0, "started": "15:02", "best": 3.000014, "target": 2.989568, "status": "done", "note": "negative: rough cross-cell seeds + Adam don't reach hockyy's 30; motivates E9"},
+    {"id": "V1", "name": "independent check of hockyy claims (5 packings, geometry.certify)", "ns": "26-30", "cores": 0, "started": "15:09", "best": 2.942809042, "target": null, "status": "done", "note": "all valid in double precision"},
+    {"id": "E6", "name": "fair morph test v2 (2D n=11, Yohei benchmark)", "ns": "11 (2D)", "cores": 0, "started": "14:14", "best": 3.8865, "target": 3.8771, "status": "done", "note": "morph 3.8865 vs random 3.8877 - inconclusive, morph keeps small share"},
+    {"id": "E7", "name": "native C kernel A/B (checked vs torch autograd to 3e-14)", "ns": "17,30,82", "cores": 0, "started": "14:22", "best": null, "target": null, "status": "done", "note": "PROMOTED: 25-50x faster; production switched to --native at 14:26"}
+  ]
+}

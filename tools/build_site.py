@@ -13,6 +13,10 @@ os.makedirs(out, exist_ok=True)
 
 # ---------- data snapshot
 live = json.load(open(os.path.join(ROOT, "results", "live.json")))
+try:
+    live["experiments"] = json.load(open(os.path.join(ROOT, "results", "experiments.json")))
+except OSError:
+    live["experiments"] = None
 table = {}
 for k, e in live["table"].items():
     n = int(k)

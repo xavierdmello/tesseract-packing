@@ -122,6 +122,12 @@ button.on { background: #222; color: #fff; }
     <div id="nb-exps"></div>
     <ul id="nb-ins"></ul>
   </div>
+  <h2 id="experiments">Experiments — 4 research cores</h2>
+  <p class="small" id="exp-gist" style="margin-top:-6px"></p>
+  <p class="small" style="margin-top:-6px">The 8 production cores run the promoted main algorithm. These 4 run candidate
+  methods; a candidate that beats production is promoted to main. Full lab notebook: <a href="https://github.com/xavierdmello/tesseract-packing/blob/research/notes/experiments.md">notes/experiments.md</a>.</p>
+  <table id="exptbl"></table>
+  <p class="small" id="exp-updated" style="color:var(--muted)"></p>
   <p class="small">Engine log</p>
   <div id="log"></div>
 </main>
@@ -424,6 +430,18 @@ function render() {
   document.getElementById('nb-exps').innerHTML = exps.length
     ? '<p class="small" style="margin:8px 0 2px"><b>Experiments running now</b> (research cores)</p><ul style="margin:0">' + exps.map(r => `<li>${r.label || r.dir} <span class="small" style="color:var(--muted)">(${r.dim}D, n = ${r.n})</span></li>`).join('') + '</ul>'
     : '<p class="small" style="margin:8px 0 2px;color:var(--muted)">No experiments running right now.</p>';
+  // experiments table (the 4 research cores; history included)
+  const EX = EXP || L.experiments || null;
+  if (EX) {
+    document.getElementById('exp-gist').textContent = EX.gist || '';
+    const stx = e => e.status === 'running' ? '<span style="color:#1a7f37">● running</span>'
+      : e.status === 'promoted' ? '<b style="color:#1a7f37">↑ promoted to main</b>' : '✓ ' + e.status;
+    document.getElementById('exptbl').innerHTML = '<tr><th class="l">id</th><th class="l">experiment</th><th class="l">n</th><th>best s</th><th>target</th><th class="l">status / result</th></tr>' +
+      EX.experiments.map(e => `<tr${e.status === 'running' ? ' style="background:var(--hi)"' : ''}><td class="l"><b>${e.id}</b></td><td class="l">${e.name}</td><td class="l">${e.ns}</td>` +
+        `<td>${e.best != null ? (+e.best).toFixed(6) : '–'}</td><td>${e.target != null ? (+e.target).toFixed(6) : '–'}</td>` +
+        `<td class="l">${stx(e)}${e.note ? ' — ' + e.note : ''}${e.cores ? ` <span class="small" style="color:var(--muted)">(${e.cores} cores)</span>` : ''}</td></tr>`).join('');
+    document.getElementById('exp-updated').textContent = 'Updated ' + (EX.updated || '') + '.';
+  }
   // research notebook
   if (PLAN) {
     document.getElementById('nb-note').textContent = PLAN.note || '';
@@ -568,6 +586,9 @@ vtl.addEventListener('pointerup', () => { scrub = false; });
 let PLAN = null;
 async function pollPlan() { try { const r = await fetch('/plan.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) PLAN = await r.json(); } catch (e) {} }
 pollPlan(); setInterval(pollPlan, 5000);
+let EXP = null;
+async function pollExp() { try { const r = await fetch('results/experiments.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) EXP = await r.json(); } catch (e) {} }
+pollExp(); setInterval(pollExp, 5000);
 async function poll() {
   try { const r = await fetch('/results/live.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) { LIVE = await r.json(); render(); } }
   catch (err) { document.getElementById('dot').className = 'dot'; document.getElementById('livetxt').textContent = 'Cannot reach the local server (is src/engine.py or src/serve.py running?).'; }
