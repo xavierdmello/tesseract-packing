@@ -40,7 +40,8 @@ start = html.index("\n", start) + 1
 end = html.index("</main>")
 html = html[:start] + '  <div style="display:none">\n' + html[start:end] + "  </div>\n" + html[end:]
 one_liner = ('  <p class="byline" style="max-width:760px;margin:6px auto 14px">'
-             '4th dimension is visualized as time, click a picture for alternative visualizations</p>\n')
+             '4th dimension is visualized as time: two cubes can occupy the same space, just never at the same time. '
+             'Click a picture for alternative visualizations.</p>\n')
 html = html.replace("  <h1>Tesseracts in Tesseracts</h1>\n", "  <h1>Tesseracts in Tesseracts</h1>\n" + one_liner, 1)
 html = html.replace("fetch('/results/live.json?t=' + Date.now()", "fetch('data.json?t=' + Date.now()")
 html = html.replace("fetch('/plan.json?t=' + Date.now()", "fetch('data.json?t=' + Date.now()")
