@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-09 17:23",
+  "updated": "2026-10-09 17:25",
   "max_long": 8,
   "auto_minutes": 10.0,
   "note": "Autonomous mode: the AI researcher is offline, so a rule-based planner is scheduling. Rules: ride n that set a record in the last 15 min (12-min runs), grow into n+1 (8 min), and probe open breadth targets (3 min). Skip n that failed 6 times in the last hour. Results publish automatically. Hot now: [29, 17, 82]; cooling off: none.",
@@ -15,17 +15,17 @@
     {
       "n": 29,
       "minutes": 10.0,
-      "why": "Hot: set a record 8 min ago. Long run while it's still falling."
+      "why": "Hot: set a record 10 min ago. Long run while it's still falling."
     },
     {
       "n": 17,
       "minutes": 10.0,
-      "why": "Hot: set a record 10 min ago. Long run while it's still falling."
+      "why": "Hot: set a record 12 min ago. Long run while it's still falling."
     },
     {
       "n": 82,
       "minutes": 10.0,
-      "why": "Hot: set a record 10 min ago. Long run while it's still falling."
+      "why": "Hot: set a record 12 min ago. Long run while it's still falling."
     },
     {
       "n": 30,
@@ -41,21 +41,6 @@
       "n": 83,
       "minutes": 10.0,
       "why": "Grow from the new n = 82 record."
-    },
-    {
-      "n": 25,
-      "minutes": 10.0,
-      "why": "Breadth probe (round robin over open targets)."
-    },
-    {
-      "n": 26,
-      "minutes": 10.0,
-      "why": "Breadth probe (round robin over open targets)."
-    },
-    {
-      "n": 27,
-      "minutes": 10.0,
-      "why": "Breadth probe (round robin over open targets)."
     },
     {
       "n": 28,
@@ -89,6 +74,21 @@
     },
     {
       "n": 103,
+      "minutes": 10.0,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 104,
+      "minutes": 10.0,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 105,
+      "minutes": 10.0,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 121,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     }
