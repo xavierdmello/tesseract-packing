@@ -37,11 +37,15 @@ def parse_events(since):
 
 def stop_stale_experiments(max_age=1800):
     """Experiment engines loop forever; stop ones (other than the auto sweep) older than max_age seconds."""
-    out = subprocess.run(["ps", "-eo", "pid,etimes,command"], capture_output=True, text=True).stdout.splitlines()
-    for line in out[1:]:
+    def secs(et):                                   # macOS etime: [[dd-]hh:]mm:ss
+        d, _, rest = et.rpartition("-"); p = [int(x) for x in rest.split(":")]
+        while len(p) < 3: p.insert(0, 0)
+        return (int(d) if d else 0) * 86400 + p[0] * 3600 + p[1] * 60 + p[2]
+    out = subprocess.run(["ps", "-eo", "pid=,etime=,command="], capture_output=True, text=True).stdout.splitlines()
+    for line in out:
         parts = line.split(None, 2)
         if len(parts) < 3 or "src/engine.py" not in parts[2] or "results_exp_auto" in parts[2]: continue
-        if re.search(r"--results results_(exp|aux)", parts[2]) and int(parts[1]) > max_age:
+        if re.search(r"--results results_(exp|aux)", parts[2]) and secs(parts[1]) > max_age:
             subprocess.run(["kill", "-TERM", parts[0]]); print(time.strftime("%H:%M"), "stopped stale experiment", parts[2][:90], flush=True)
 
 
