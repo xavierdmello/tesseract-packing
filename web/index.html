@@ -124,6 +124,11 @@ button.on { background: #222; color: #fff; }
     <button onclick="ctl('force')" title="start this run now (preempts the newest run)">▶ run now</button>
     <button onclick="ctl('queue_add')" title="keep re-running this n before the plan's entries">+ add to queue</button>
     <button onclick="ctl('block')" title="never schedule this n">⊘ block n</button>
+    <button onclick="ctl('focus')" title="all 12 cores on this n for the given minutes; nothing else runs" style="font-weight:bold">🎯 all 12 cores on n</button>
+    <br><button onclick="ctl('stop_all')" title="end every current run; cores take their next tasks">⏹ stop all runs</button>
+    <button onclick="ctl('pause')" title="stop everything; nothing new starts until resume">⏸ pause all</button>
+    <button onclick="ctl('resume')">▶ resume</button>
+    <button onclick="ctl('unfocus')" title="end focus mode early">end focus</button>
     <div id="mc-state" style="color:#555"></div>
   </div>
   <div id="cores"></div>
@@ -617,7 +622,7 @@ function autoLabel() {
 async function ctl(action, extra = {}) {
   const n = +document.getElementById('mc-n').value, minutes = +document.getElementById('mc-min').value || 10;
   const body = { action, ...extra };
-  if (['force', 'queue_add', 'block'].includes(action)) { if (!n) return; body.n = n; body.minutes = minutes; }
+  if (['force', 'queue_add', 'block', 'focus'].includes(action)) { if (!n) return; body.n = n; body.minutes = minutes; }
   try { const r = await fetch('/control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (r.ok) { CTL = await r.json(); renderCtl(); }
         else document.getElementById('mc-state').innerHTML = '<span style="color:#b4442f">' + (r.status === 400 ? 'n must be a positive integer' : 'request failed') + '</span>'; } catch (e) {}
@@ -628,7 +633,9 @@ function renderCtl() {
   const q = (c.queue || []).map((e, i) => `n=${e.n} · ${e.minutes} min <a href="#" onclick="ctl('queue_remove',{index:${i}});return false">×</a>`).join(' &nbsp; ');
   const b = (c.blocked || []).map(n => `${n} <a href="#" onclick="document.getElementById('mc-n').value=${n};ctl('unblock');return false">×</a>`).join(' &nbsp; ');
   const f = (c.forced || []).map(e => `n=${e.n}`).join(', ');
-  el.innerHTML = `queue: ${q || '–'} &nbsp;|&nbsp; blocked: ${b || '–'}${f ? ' &nbsp;|&nbsp; starting now: ' + f : ''}`;
+  const fo = c.focus && c.focus.until * 1000 > Date.now() ? `<b style="color:#1a4fb4">FOCUS: all cores on n=${c.focus.n}, ${Math.ceil((c.focus.until * 1000 - Date.now()) / 60000)} min left</b> &nbsp;|&nbsp; ` : '';
+  const pa = c.paused ? '<b style="color:#b4442f">PAUSED: nothing is running</b> &nbsp;|&nbsp; ' : '';
+  el.innerHTML = pa + fo + `queue: ${q || '–'} &nbsp;|&nbsp; blocked: ${b || '–'}${f ? ' &nbsp;|&nbsp; starting now: ' + f : ''}`;
 }
 async function setAuto(body) {
   try {
