@@ -39,16 +39,13 @@ start = html.index('  <p class="small" id="trivnote"')
 start = html.index("\n", start) + 1
 end = html.index("</main>")
 html = html[:start] + '  <div style="display:none">\n' + html[start:end] + "  </div>\n" + html[end:]
-one_liner = ('  <p class="byline" style="max-width:760px;margin:6px auto 14px">Each picture is a 3D movie of a 4D packing: '
-             'the 4th dimension plays as time, so every tesseract is a cube that appears, exists for a while and vanishes; '
-             'the bars underneath show when each one exists. Click a picture to scrub through time or rotate it. '
-             '<span id="snap" style="color:#777"></span> · <a href="https://github.com/xavierdmello/tesseract-packing">code &amp; data</a>'
-             ' · related: <a href="https://github.com/hockyy/tesseract-packing">hockyy/tesseract-packing</a> (better values for n = 26–30)</p>\n')
+one_liner = ('  <p class="byline" style="max-width:760px;margin:6px auto 14px">'
+             '4th dimension is visualized as time, click a picture for alternative visualizations</p>\n')
 html = html.replace("  <h1>Tesseracts in Tesseracts</h1>\n", "  <h1>Tesseracts in Tesseracts</h1>\n" + one_liner, 1)
 html = html.replace("fetch('/results/live.json?t=' + Date.now()", "fetch('data.json?t=' + Date.now()")
 html = html.replace("fetch('/plan.json?t=' + Date.now()", "fetch('data.json?t=' + Date.now()")
 html = html.replace("poll(); setInterval(poll, 2000);",
                     "poll(); setInterval(poll, 300000);\n"
-                    "setTimeout(() => { if (LIVE && LIVE.snapshot_time) document.getElementById('snap').textContent = 'Results as of ' + LIVE.snapshot_time + '.'; }, 1500);")
+                    "")
 open(os.path.join(out, "index.html"), "w").write(html)
 print("built", out, os.path.getsize(os.path.join(out, "data.json")) // 1024, "KB data")
