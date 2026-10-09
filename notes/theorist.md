@@ -23,7 +23,7 @@
 ## T3. Growing from the new structural seeds (engine, 1 core each, grow/best)
 - A: `--ns 18 --strategies grow,best --results results_exp_theory_A`, seeded by the new 17.
 - B: `--ns 83 --strategies grow --results results_exp_theory_B`, seeded by the new 82.
-- Result: see the final report. Nothing below 2.7071 (n=18) or 3.7071 (n=83) in about 10 minutes.
+- Result (2 x 5 min): n=18 no improvement (task best 2.707107, 547 starts). n=83 no improvement, but the first task reached 3.709875, within 0.003 of the 3.707107 bar. A grow from the 82 conference frame is close, so n=83 deserves longer runs (slow, about 5k steps/s).
 
 ## T4. Seed generators (src/theory_seeds.py; nothing in engine.py is changed)
 - `cross_cell_seed(n, s)`: 5x5-product frame plus (n-25) "cross cells" (x_i = x_j = mid, with i in {1,2} and j in {3,4}, turned 45 deg

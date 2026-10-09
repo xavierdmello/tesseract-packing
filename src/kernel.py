@@ -95,6 +95,8 @@ def fit_p(R_list, iters=800):
     """Quaternion-pair parameters p (8 numbers) with L(a)R(b) = R, for a list of 4x4 rotations (CPU, float64)."""
     m = Batch(4, 2, 1, "cpu", torch.float64)
     R = torch.tensor(R_list, dtype=torch.float64)
+    if torch.allclose(R, torch.eye(4, dtype=torch.float64).expand_as(R), atol=1e-14):   # unrotated: closed form
+        return [[1.0, 0, 0, 0, 1.0, 0, 0, 0] for _ in R_list], 0.0
     if torch.linalg.det(R).min() < 0:   # reflections: flip one axis (cube is symmetric, so this is the same cube)
         R = R.clone(); neg = torch.linalg.det(R) < 0; R[neg, :, 0] *= -1
     k = R.shape[0]; best = None
