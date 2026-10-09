@@ -91,7 +91,8 @@ button.on { background: #222; color: #fff; }
   <div style="display:none">
   <hr>
   <p class="byline">four-dimensional analogue of Erich Friedman's <i>Squares in Squares</i> and <i>Cubes in Cubes</i></p>
-  <div id="live"><span class="dot" id="dot"></span><span id="livetxt">connecting to the local search engine…</span></div>
+  <div id="live"><span class="dot" id="dot"></span><span id="livetxt">connecting to the local search engine…</span>
+    <button id="autobtn" onclick="toggleAuto()" style="margin-left:12px;padding:2px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px;cursor:pointer">…</button></div>
   <div id="bar"><div></div></div>
   <div id="news"></div>
   <hr>
@@ -122,8 +123,15 @@ button.on { background: #222; color: #fff; }
     <h2>Research notebook</h2>
     <p class="nbnote" id="nb-note"></p>
     <ol id="nb-queue"></ol>
+    <div id="nb-exps"></div>
     <ul id="nb-ins"></ul>
   </div>
+  <h2 id="experiments">Experiments — 4 research cores</h2>
+  <p class="small" id="exp-gist" style="margin-top:-6px"></p>
+  <p class="small" style="margin-top:-6px">The 8 production cores run the promoted main algorithm. These 4 run candidate
+  methods; a candidate that beats production is promoted to main. Full lab notebook: <a href="https://github.com/xavierdmello/tesseract-packing/blob/research/notes/experiments.md">notes/experiments.md</a>.</p>
+  <table id="exptbl"></table>
+  <p class="small" id="exp-updated" style="color:var(--muted)"></p>
   <p class="small">Engine log</p>
   <div id="log"></div>
   </div>
@@ -411,8 +419,37 @@ function render() {
         `<span><div class="pbar"><div style="width:${(100 * frac).toFixed(0)}%"></div></div></span>` +
         `<span class="mono">${tb != null ? (+tb).toFixed(6) : 'not yet valid'}</span><span class="mono">${rec != null ? (+rec).toFixed(6) : ''}</span>` +
         `<span class="${ahead ? 'ahead' : ''}">${ahead ? 'record!' : ''}</span></div>`; }).join('');
+  // research / experiment cores (separate engines, up to 4 cores)
+  const RS = (L.research || []);
+  if (on && RS.length) {
+    document.getElementById('cores').innerHTML += '<div class="row head" style="margin-top:10px"><span>research</span><span>n</span><span>progress</span><span>best this run</span><span>record there</span><span></span></div>' +
+      RS.map((r, i) => {
+        const left = Math.max(0, (r.deadline || 0) - nowS), frac = Math.min(1, 1 - left / ((r.minutes || 1) * 60));
+        return `<div class="row"><span>R${i + 1}</span><span><b>${r.n}</b> <span class="small" style="color:var(--muted)">${r.dim !== 4 ? r.dim + 'D · ' : ''}${+(r.minutes || 1).toFixed(1)} min</span></span>` +
+          `<span><div class="pbar"><div style="width:${(100 * frac).toFixed(0)}%;background:#6a8fc7"></div></div></span>` +
+          `<span class="mono">${r.task_best != null ? (+r.task_best).toFixed(6) : 'not yet valid'}</span><span class="mono">${r.record != null ? (+r.record).toFixed(6) : ''}</span><span></span></div>` +
+          `<div class="row" style="grid-template-columns:52px 1fr;border-bottom:1px solid #eee"><span></span><span class="small" style="color:var(--muted)">${r.label || r.dir}${r.strategies ? ' · strategies: ' + r.strategies : ''}</span></div>`; }).join('');
+  }
+  // experiments in the notebook
+  const exps = [...new Map(RS.map(r => [r.dir, r])).values()];
+  document.getElementById('nb-exps').innerHTML = exps.length
+    ? '<p class="small" style="margin:8px 0 2px"><b>Experiments running now</b> (research cores)</p><ul style="margin:0">' + exps.map(r => `<li>${r.label || r.dir} <span class="small" style="color:var(--muted)">(${r.dim}D, n = ${r.n})</span></li>`).join('') + '</ul>'
+    : '<p class="small" style="margin:8px 0 2px;color:var(--muted)">No experiments running right now.</p>';
+  // experiments table (the 4 research cores; history included)
+  const EX = EXP || L.experiments || null;
+  if (EX) {
+    document.getElementById('exp-gist').textContent = EX.gist || '';
+    const stx = e => e.status === 'running' ? '<span style="color:#1a7f37">● running</span>'
+      : e.status === 'promoted' ? '<b style="color:#1a7f37">↑ promoted to main</b>' : '✓ ' + e.status;
+    document.getElementById('exptbl').innerHTML = '<tr><th class="l">id</th><th class="l">experiment</th><th class="l">n</th><th>best s</th><th>target</th><th class="l">status / result</th></tr>' +
+      EX.experiments.map(e => `<tr${e.status === 'running' ? ' style="background:var(--hi)"' : ''}><td class="l"><b>${e.id}</b></td><td class="l">${e.name}</td><td class="l">${e.ns}</td>` +
+        `<td>${e.best != null ? (+e.best).toFixed(6) : '–'}</td><td>${e.target != null ? (+e.target).toFixed(6) : '–'}</td>` +
+        `<td class="l">${stx(e)}${e.note ? ' — ' + e.note : ''}${e.cores ? ` <span class="small" style="color:var(--muted)">(${e.cores} cores)</span>` : ''}</td></tr>`).join('');
+    document.getElementById('exp-updated').textContent = 'Updated ' + (EX.updated || '') + '.';
+  }
   // research notebook
   if (PLAN) {
+    autoLabel();
     document.getElementById('nb-note').textContent = PLAN.note || '';
     const taken = new Set(L.plan_taken || []);
     const items = (PLAN.queue || []).map(q => {
@@ -511,8 +548,10 @@ function openViewer(n, lab, pic) {
 function vdraw() {
   const e = CUR.e;
   document.getElementById('vs').textContent = `s = ${(+e.s).toFixed(9)}`;
-  const tilted = e.cubes.filter(q => { const iv = lifetime(q, CUR.axis); return iv[1] - iv[0] > 1 + 1e-4; }).length;
-  document.getElementById('vinfo').innerHTML = `${e.cubes.length} tesseracts. ${tilted} are tilted in the time direction (bars longer than 1).<br>${e.source}`;
+  const tilted = e.cubes.filter(q => { const iv = lifetime(q, CUR.axis); return iv[1] - iv[0] > 1.01; }).length;
+  document.getElementById('vinfo').innerHTML = `${e.cubes.length} tesseracts; ${tilted} are tilted toward the time direction (longer bars). ` +
+    `A tilted one is sliced at an angle, so it shows up as a box that stretches (up to √2 ≈ 1.41 long) and shrinks again while it exists, ` +
+    `just like the tilted square in the 2D example.<br>${e.source}`;
   document.getElementById('wv').textContent = CUR.w.toFixed(3); document.getElementById('smax').textContent = e.s.toFixed(3);
   if (CUR.mode === 'slice') {
     drawSlice(vctx, 1200, e, CUR.axis, CUR.w, CUR.yaw, CUR.pitch);
@@ -553,6 +592,23 @@ vtl.addEventListener('pointerup', () => { scrub = false; });
 let PLAN = null;
 async function pollPlan() { try { const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) PLAN = await r.json(); } catch (e) {} }
 pollPlan(); setInterval(pollPlan, 5000);
+let EXP = null;
+async function pollExp() { try { const r = await fetch('results/experiments.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) EXP = await r.json(); } catch (e) {} }
+pollExp(); setInterval(pollExp, 5000);
+// auto mode: ON = rule-based planner runs (tools/autoplan.py); OFF = the AI researcher schedules plan.json by hand.
+function autoLabel() {
+  const b = document.getElementById('autobtn'); if (!b) return;
+  const on = !!(PLAN && PLAN.auto);
+  b.textContent = on ? '⏸ stop auto mode' : '▶ start auto mode';
+  b.style.background = on ? '#fdecec' : '#e9f6ec';
+}
+async function toggleAuto() {
+  try {
+    const r = await fetch('/auto', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ auto: !(PLAN && PLAN.auto) }) });
+    if (r.ok) { const j = await r.json(); if (PLAN) PLAN.auto = j.auto; autoLabel(); }
+  } catch (e) {}
+}
 async function poll() {
   try { const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) { LIVE = await r.json(); render(); } }
   catch (err) { document.getElementById('dot').className = 'dot'; document.getElementById('livetxt').textContent = 'Cannot reach the local server (is src/engine.py or src/serve.py running?).'; }
