@@ -38,3 +38,27 @@ Each entry gives the hypothesis, the setup, the result and the decision. All tim
 - **Arms:** `--strategies random` vs `--strategies morph`. 1 core each, 10 min, both starting from scratch.
 - **Metric:** fraction of finished starts reaching s ≤ 3.8810 (within 0.1% of 3.8771), plus best s.
 - **Promotion rule:** promote morph in production if it reaches hits faster, or finds structures that random starts don't.
+
+**E5 outcome:** invalid. The counters were reset when the engine started its next task, so no readout. The logging was fixed (per-task hits/starts now go to events.log).
+
+## E6: Fair morph test v2 (slow, annealed), 2D n = 11, 10 min, 1 core each (machine at full load) — 14:14
+- **Morph v2 settings:** `--morph-k 100,200 --morph-noise 0.02` (10k–20k steps of morphing, annealing jiggle).
+- **Result:**
+
+  | arm | best s | starts within 0.1% of 3.8771 |
+  |---|---|---|
+  | morph v2 | **3.8865** | 0 / 74 |
+  | random (rigid) | 3.8877 | 0 / 107 |
+- **Conclusion:** first time morph beat its control, slightly. Neither hit the threshold. Inconclusive. Morph stays as an exploration share; the theorist agent may revisit it.
+
+## E7: Native C kernel — 14:22
+- **Correctness:** the penalty and all gradients match torch autograd to ≤ 3e-14 relative error. A 50-step Adam trajectory matches to 7e-16.
+- **Speed** (1 core each, torch and native run side by side, machine at full load; config-steps/s):
+
+  | n | torch | native | native + skip far pairs |
+  |---|---|---|---|
+  | 17 | 2,794 | 74,685 | 109,649 |
+  | 30 | 786 | 19,191 | 40,822 |
+  | 82 | 129 | 3,172 | 5,380 |
+- **Validation run:** 2 cores, from scratch, 1.5 min. Reached n = 17: 2.5792 and n = 26: 2.9476, which beat production's 26.
+- **Decision:** production switched to `--native` at 14:26. Production throughput went from ~17k to ~398k config-steps/s. Within 2 minutes it took n = 28 below the 2.98995 bound and n = 29 below s = 3.
