@@ -1,3 +1,8 @@
+<p align="center">
+  <a href="https://xavierdmello.github.io/tesseract-packing/"><img src="docs/screenshot.png" alt="Tesseracts in Tesseracts: live website" width="100%"></a>
+</p>
+<p align="center"><b>Live website: <a href="https://xavierdmello.github.io/tesseract-packing/">https://xavierdmello.github.io/tesseract-packing/</a></b></p>
+
 # tesseract-packing
 
 What is the smallest 4-cube that holds n unit tesseracts (4-dimensional cubes), with rotations allowed?
