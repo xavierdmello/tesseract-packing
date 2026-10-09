@@ -54,7 +54,7 @@ intro = ('  <style>.tip{position:relative;color:#1a4fb4;text-decoration:underlin
          '<span class="pop">Two cubes can occupy the same space, just never at the same time.</span></span>.</p>\n')
 html = html.replace("  <h1>Tesseracts in Tesseracts</h1>\n", "  <h1>Tesseracts in Tesseracts</h1>\n" + intro, 1)
 html = html.replace("</main>",
-                    '  <p class="byline" style="margin:24px auto 0">Click a picture for alternative visualizations.</p>\n'
+
                     '  <p class="byline" style="margin:6px auto 0;font-size:15px;color:#555">Inspired by: <a href="https://erich-friedman.github.io/packing/cubincub/">cube packing</a> and <a href="https://kingbird.myphotos.cc/packing/squares_in_squares.html">square packing</a></p>\n</main>', 1)
 html = html.replace("fetch('/results/live.json?t=' + Date.now()", "fetch('data.json?t=' + Date.now()")
 html = html.replace("fetch('/plan.json?t=' + Date.now()", "fetch('data.json?t=' + Date.now()")
