@@ -502,13 +502,21 @@ def main():
         mgr.shutdown()
 
 
+def slim(n, e):
+    """Trivial grids that the page doesn't draw are sent without their (large) coordinate lists."""
+    proved = n == 1 or 2 <= n <= 16 or round(n ** 0.25) ** 4 == n
+    if (e.get("source") or "").startswith("grid") and not proved:
+        return {k: v for k, v in e.items() if k not in ("cubes", "history")} | {"cubes": e["cubes"][:1] if e.get("cubes") else None}
+    return {k: v for k, v in e.items() if k != "history"}
+
+
 def write_live(args, D, ns, table, workers, events, t_start, searches):
     rate = sum(w.get("steps_per_sec", 0) for w in workers.values() if w.get("state") == "running")
     live = {"dim": D, "ns": ns, "mode": "farm", "minutes_per_n": args.minutes,
             "updated": time.time(), "started": t_start, "uptime": time.time() - t_start,
             "workers": workers, "steps_per_sec": rate, "events": events[-80:], "searches": searches,
             "plan_taken": args.plan_state["taken"] if hasattr(args, "plan_state") else [],
-            "table": {n: table[n] for n in sorted(table) if n <= max(ns)}}
+            "table": {n: slim(n, table[n]) for n in sorted(table) if n <= max(ns)}}
     atomic_json(os.path.join(args.res, "live.json"), live)
     if not args.no_dashboard:
         out = ["\033[H\033[2J", f" 4D tesseract packing (farm) | {rate:,.0f} config-steps/s | http://localhost:{args.port}", "",
