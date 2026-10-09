@@ -360,6 +360,7 @@ def main():
         table[n].setdefault("search", None)
 
     from kernel import fit_p
+    p_memo = {}                                  # rotation -> quaternion-pair parameters (fitted once per distinct rotation)
     for n in table:
         cubes = table[n]["cubes"]
         if cubes and D != 4:
@@ -369,9 +370,14 @@ def main():
                     import numpy as np
                     A = np.real(logm(np.asarray(q["R"]))); q["p"] = A[np.triu_indices(D, 1)].tolist()
         elif cubes and any("p" not in q for q in cubes):
-            ps, err = fit_p([q["R"] for q in cubes])
-            for q, pp in zip(cubes, ps): q["p"] = pp
-            if err > 1e-12: print(f"warning: rotation fit error {err:.1e} for n={n}", file=sys.stderr)
+            for q in cubes:
+                if "p" in q: continue
+                key = tuple(round(x, 9) for row in q["R"] for x in row)
+                if key not in p_memo:
+                    ps, err = fit_p([q["R"]])
+                    p_memo[key] = ps[0]
+                    if err > 1e-12: print(f"warning: rotation fit error {err:.1e} for n={n}", file=sys.stderr)
+                q["p"] = p_memo[key]
 
     mgr = mp.Manager()
     board = mgr.dict()
@@ -525,7 +531,10 @@ def main():
                         e = json.load(open(path))
                         m_n = e["n"]
                         if m_n in table and e.get("cubes") and e["s"] < table[m_n]["s"] - 1e-9 and "removed" not in e.get("source", ""):
-                            accept(m_n, e["cubes"], e["s"], f"found by experiment ({os.path.basename(os.path.dirname(os.path.dirname(path)))}: {e.get('source','')})")
+                            origin = e.get("source", "")
+                            while origin.startswith("found by experiment ("):     # keep only the innermost origin
+                                origin = origin[origin.index(": ") + 2:].rstrip(")") if ": " in origin else origin
+                            accept(m_n, e["cubes"], e["s"], f"found by experiment ({os.path.basename(os.path.dirname(os.path.dirname(path)))}: {origin})")
                     except Exception as ex:
                         log(f"import of {path} failed: {ex}")
             if time.time() - last_write > 1.0:

@@ -507,8 +507,10 @@ function openViewer(n, lab, pic) {
 function vdraw() {
   const e = CUR.e;
   document.getElementById('vs').textContent = `s = ${(+e.s).toFixed(9)}`;
-  const tilted = e.cubes.filter(q => { const iv = lifetime(q, CUR.axis); return iv[1] - iv[0] > 1 + 1e-4; }).length;
-  document.getElementById('vinfo').innerHTML = `${e.cubes.length} tesseracts. ${tilted} are tilted in the time direction (bars longer than 1).<br>${e.source}`;
+  const tilted = e.cubes.filter(q => { const iv = lifetime(q, CUR.axis); return iv[1] - iv[0] > 1.01; }).length;
+  document.getElementById('vinfo').innerHTML = `${e.cubes.length} tesseracts; ${tilted} are tilted toward the time direction (longer bars). ` +
+    `A tilted one is sliced at an angle, so it shows up as a box that stretches (up to √2 ≈ 1.41 long) and shrinks again while it exists, ` +
+    `just like the tilted square in the 2D example.<br>${e.source}`;
   document.getElementById('wv').textContent = CUR.w.toFixed(3); document.getElementById('smax').textContent = e.s.toFixed(3);
   if (CUR.mode === 'slice') {
     drawSlice(vctx, 1200, e, CUR.axis, CUR.w, CUR.yaw, CUR.pitch);
