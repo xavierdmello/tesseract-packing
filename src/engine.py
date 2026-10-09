@@ -388,9 +388,10 @@ def main():
         p = read_plan() or {"queue": []}
         busy = {a["n"] for a in active.values()}
         n_long = sum(1 for a in active.values() if a.get("minutes", args.minutes) > args.minutes)
+        max_long = int(p.get("max_long", MAX_LONG))
         q = [e for e in p.get("queue", []) if e["n"] in table]
-        mins_of = lambda e: min(10.0, float(e.get("minutes", args.minutes)))
-        ok = lambda e: e["n"] not in busy and (mins_of(e) <= args.minutes or n_long < MAX_LONG)
+        mins_of = lambda e: min(15.0, float(e.get("minutes", args.minutes)))
+        ok = lambda e: e["n"] not in busy and (mins_of(e) <= args.minutes or n_long < max_long)
         for e in q:
             if e["n"] not in plan_state["taken"] and ok(e):
                 plan_state["taken"].append(e["n"]); return e["n"], mins_of(e)

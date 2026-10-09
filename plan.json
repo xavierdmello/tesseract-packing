@@ -1,55 +1,79 @@
 {
-  "updated": "2026-10-09 14:13",
-  "note": "Round 4. The 10-minute run on n = 27 paid off: 2.9818 → 2.9512, and n = 26 followed to 2.9506. n = 28 hasn't produced anything below Friedman's 2.98995 in ~10 one-minute tries, but it can now grow from a much better 27, so it gets the second long slot. n = 29–33 drop in priority until 28 breaks, since the chain feeds them.",
+  "updated": "2026-10-09 14:22",
+  "max_long": 6,
+  "note": "Round 5, breadth first. The goal is more distinct n with a real result, not shaving existing records. The richest unexplored area is n = 82–100: all 19 share one product bound (3.707), and 82 = 81-grid + 1 is the exact analogue of 17 = 16-grid + 1, which beat its product bound by 0.13. If 82 falls, 83, 84, … can each be grown into their own value. Large n is slow, so those tasks get 12–15 minutes. The cheap 28→35 chain stays on short tasks.",
   "insights": [
-    "Long searches help when a record was still falling at the buzzer: n = 27 went 2.9818 → 2.9512 in one 10-minute run.",
-    "Records so far: 17 (2.5784), 26 (2.9506), 27 (2.9512). All from \"grow\" or \"best\" restarts; no random start has ever won.",
-    "n = 18–25 haven't moved off 2+1/√2 in about 30 minutes of total search. I believe 18 needs ≈2.707, like s(6) = 3 in 2D.",
-    "n = 29–33: about 9 one-minute tries each, no s < 3 yet. They probably need a good 28 to grow from.",
-    "Morph (blob → cube) is being re-tested fairly on 2D n = 11 (Yohei's benchmark) with a slower, annealed schedule. Result around 14:24."
+    "Records so far: 17 (2.5784), 26 (2.9506), 27 (2.9512). Every one came from \"grow\" (best (n−1) packing + 1 cube) or \"best\" restarts.",
+    "Long searches pay off while a record is still falling: n = 27 went 2.9818 → 2.9512 in one 10-minute run.",
+    "One minute is useless for n ≥ ~50: the search doesn't even reach a valid packing in that time. Each step costs ~n² pair checks.",
+    "Top-down shots below s = 3 at n = 40 or 60 look hopeless for now. Even in 3D, nothing above 14 cubes fits below 3.",
+    "I believe n = 18–25 need ≈2.707 (no movement in ~30 min of search). In 2D, 5 squares get a cheap trick but 6 need side 3."
   ],
   "queue": [
     {
+      "n": 82,
+      "minutes": 15,
+      "why": "81-grid + 1, the analogue of 17. Bound 3.707 from the 10×10 product. Grow from the 81-grid; a 4D-native packing could be well below."
+    },
+    {
+      "n": 101,
+      "minutes": 15,
+      "why": "10×10 product + 1. Bound 3.879 from the 11×11 product. Grow from 100 (3.707)."
+    },
+    {
       "n": 28,
-      "minutes": 10,
-      "why": "Long search (10 min). Grow from the new 27 (2.9512); the bound to beat is 2.98995. Breaking it unlocks the 29+ chain."
-    },
-    {
-      "n": 27,
-      "minutes": 10,
-      "why": "Long search (10 min). Still improving steadily at the end of its last run."
-    },
-    {
-      "n": 26,
-      "why": "Keeps improving in small steps (2.9506); 1-minute checks."
+      "minutes": 8,
+      "why": "Beat Friedman's 2.98995 by growing from 27 (2.9512). Unlocks the 29+ chain."
     },
     {
       "n": 29,
-      "why": "First n where any s < 3 would be new; grow from 28."
+      "minutes": 4,
+      "why": "First n with only the trivial s = 3. Grow from 28."
     },
     {
-      "n": 17,
-      "why": "Our deepest record; 1-minute checks per cycle."
+      "n": 83,
+      "minutes": 12,
+      "why": "81-grid + 2. Gets its own value if the 82 trick generalises; grow from 82."
     },
     {
       "n": 30,
+      "minutes": 3,
+      "why": "Chain continuation from 29."
+    },
+    {
+      "n": 102,
+      "minutes": 12,
+      "why": "100-product + 2; grow from 101."
+    },
+    {
+      "n": 31,
+      "minutes": 3,
+      "why": "Chain continuation."
+    },
+    {
+      "n": 26,
+      "minutes": 2,
+      "why": "Still creeping down (2.9506); cheap refinement."
+    },
+    {
+      "n": 27,
+      "minutes": 3,
+      "why": "Cheap refinement after its long run."
+    },
+    {
+      "n": 17,
+      "minutes": 2,
+      "why": "Deepest record; occasional check."
+    },
+    {
+      "n": 32,
+      "minutes": 3,
       "why": "Chain continuation."
     },
     {
       "n": 18,
-      "why": "Hardest open question, kept warm."
-    },
-    {
-      "n": 31,
-      "why": "Chain continuation."
-    },
-    {
-      "n": 32,
-      "why": "Chain continuation."
-    },
-    {
-      "n": 19,
-      "why": "Plateau follow-up."
+      "minutes": 2,
+      "why": "Hardest small open question, kept warm."
     }
   ]
 }
