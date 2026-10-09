@@ -542,6 +542,16 @@ async function poll() {
 }
 poll(); setInterval(poll, 300000);
 
+
+const _caption = caption;
+caption = function (e) {
+  const r = _caption(e);
+  if (e.found_at && !/^(grid|product)/.test(e.source || '')) {
+    const d = new Date(e.found_at.replace(' ', 'T'));
+    return ['Found ' + d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + '.', ''];
+  }
+  return r;
+};
 </script>
 </body>
 </html>
