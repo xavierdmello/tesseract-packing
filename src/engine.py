@@ -265,7 +265,7 @@ def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph
     while True:
         task = task_q.get()
         if task is None: break
-        out_q.put(("start", wid, {"n": task["n"], "t0": time.time(), "deadline": task["deadline"], "minutes": task.get("minutes", 1)}))
+        out_q.put(("start", wid, {"n": task["n"], "t0": time.time(), "deadline": task["deadline"], "minutes": task.get("minutes", 1), "tid": task.get("tid")}))
         try:
             run(task)
         except Exception:
@@ -275,17 +275,50 @@ def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph
 
 
 # =============================================================== main
+# Manual controls (web UI → HTTP handler → main loop). Persisted in results/control.json.
+CONTROL = {"forced": [], "queue": [], "blocked": [], "stop": [], "lock": threading.Lock()}
+
+
+def control_save():
+    try:
+        with open(os.path.join(ROOT, "results", "control.json.tmp"), "w") as f:
+            json.dump({k: CONTROL[k] for k in ("queue", "blocked")}, f)
+        os.replace(os.path.join(ROOT, "results", "control.json.tmp"), os.path.join(ROOT, "results", "control.json"))
+    except Exception:
+        pass
+
+
 class Quiet(SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
     def end_headers(self):
         self.send_header("Cache-Control", "no-store"); super().end_headers()
     def do_POST(self):
+        if self.path == "/control":
+            try:
+                ln = int(self.headers.get("Content-Length", 0) or 0)
+                b = json.loads(self.rfile.read(ln) or b"{}")
+                a = b.get("action"); n = int(b["n"]) if "n" in b else None
+                mins = max(0.5, min(60.0, float(b.get("minutes", 10))))
+                with CONTROL["lock"]:
+                    if a == "force": CONTROL["forced"].append({"n": n, "minutes": mins})
+                    elif a == "queue_add": CONTROL["queue"].append({"n": n, "minutes": mins})
+                    elif a == "queue_remove": CONTROL["queue"] = [e for i, e in enumerate(CONTROL["queue"]) if i != int(b.get("index", -1))]
+                    elif a == "block": CONTROL["blocked"] = sorted(set(CONTROL["blocked"]) | {n})
+                    elif a == "unblock": CONTROL["blocked"] = [x for x in CONTROL["blocked"] if x != n]
+                    elif a == "stop": CONTROL["stop"].append(int(b["wid"]))
+                    else: raise ValueError(a)
+                    control_save()
+                    out = json.dumps({k: CONTROL[k] for k in ("forced", "queue", "blocked")}).encode()
+            except Exception as ex:
+                self.send_error(400, str(ex)); return
+            self.send_response(200); self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(out))); self.end_headers(); self.wfile.write(out); return
         if self.path != "/auto":
             self.send_error(404); return
         import subprocess as sp
         try:
             ln = int(self.headers.get("Content-Length", 0) or 0)
-            want = bool(json.loads(self.rfile.read(ln) or b"{}").get("auto"))
+            body = json.loads(self.rfile.read(ln) or b"{}")
         except Exception:
             self.send_error(400); return
         # The planner process always runs (it is also the production watchdog). The button only flips plan.json's
@@ -294,14 +327,18 @@ class Quiet(SimpleHTTPRequestHandler):
         if not running:
             sp.Popen([".venv/bin/python", "tools/autoplan.py"], stdout=open("logs/autoplan.log", "a"),
                      stderr=open("logs/autoplan.log", "a"), start_new_session=True)
-        try:                                     # reflect the flag in plan.json (bumps version -> reload)
-            p = json.load(open("plan.json")); p["auto"] = want
-            p["updated"] = time.strftime("%Y-%m-%d %H:%M")
+        try:                                     # reflect the flag / minutes in plan.json (bumps version -> reload)
+            p = json.load(open("plan.json"))
+            if "auto" in body: p["auto"] = bool(body["auto"])
+            if "minutes" in body: p["auto_minutes"] = max(0.5, min(60.0, float(body["minutes"])))
+            if "research_cores" in body: p["research_cores"] = int(max(0, min(12, int(body["research_cores"]))))
+            p["updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
             json.dump(p, open("plan.json.tmp", "w"), indent=2, ensure_ascii=False)
             os.replace("plan.json.tmp", "plan.json")
+            want = {"auto": p.get("auto", False), "minutes": p.get("auto_minutes", 10), "research_cores": p.get("research_cores", 4)}
         except Exception:
-            pass
-        out = json.dumps({"auto": want}).encode()
+            want = {}
+        out = json.dumps(want).encode()
         self.send_response(200); self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(out))); self.end_headers(); self.wfile.write(out)
 
@@ -458,14 +495,27 @@ def main():
 
     MAX_LONG = 2                                   # at most this many cores on long (> 1 min) tasks
 
+    mq_state = {"i": 0}
+
     def next_task():
-        """(n, minutes) from the plan: first entry not taken in this plan version, not busy, respecting MAX_LONG."""
-        p = read_plan() or {"queue": []}
+        """(n, minutes): forced runs first, then the manual queue, then the plan. Blocked n are never scheduled."""
         busy = {a["n"] for a in active.values()}
+        with CONTROL["lock"]:
+            blocked = set(CONTROL["blocked"])
+            while CONTROL["forced"]:
+                e = CONTROL["forced"].pop(0)
+                if e["n"] in table and e["n"] not in busy:
+                    log(f"manual: forced run n={e['n']} for {e['minutes']} min"); return e["n"], e["minutes"]
+            mq = [e for e in CONTROL["queue"] if e["n"] in table and e["n"] not in busy and e["n"] not in blocked]
+            if mq:
+                e = mq[mq_state["i"] % len(mq)]; mq_state["i"] += 1
+                return e["n"], e["minutes"]
+        p = read_plan() or {"queue": []}
+        busy = busy | blocked
         n_long = sum(1 for a in active.values() if a.get("minutes", args.minutes) > args.minutes)
         max_long = int(p.get("max_long", MAX_LONG))
         q = [e for e in p.get("queue", []) if e["n"] in table]
-        mins_of = lambda e: min(15.0, float(e.get("minutes", args.minutes)))
+        mins_of = lambda e: min(60.0, float(e.get("minutes", args.minutes)))
         ok = lambda e: e["n"] not in busy and (mins_of(e) <= args.minutes or n_long < max_long)
         for e in q:
             if e["n"] not in plan_state["taken"] and ok(e):
@@ -476,7 +526,7 @@ def main():
         for e in q:                                    # long slots full: run a free plan entry as a short task
             if e["n"] not in busy:
                 return e["n"], args.minutes
-        free = [n for n in ns if n not in busy]        # never put two workers on the same n
+        free = [n for n in ns if n not in busy]        # never put two workers on the same n (or a blocked one)
         return (free[0] if free else ns[0]), args.minutes
 
     def assign():
@@ -535,8 +585,25 @@ def main():
 
     args.plan_state = plan_state
     for _ in range(NW): assign()
+    try:                                              # restore the manual queue / blocked list
+        c0 = json.load(open(os.path.join(RES, "control.json")))
+        CONTROL["queue"], CONTROL["blocked"] = c0.get("queue", []), c0.get("blocked", [])
+    except Exception:
+        pass
+    args.control = CONTROL
     try:
         while True:
+            # manual controls: stop requested runs; a forced run preempts the most recently started run
+            with CONTROL["lock"]:
+                stops = CONTROL["stop"][:]; CONTROL["stop"].clear()
+                if CONTROL["forced"] and not stops and active:
+                    victim = max(active, key=lambda w: active[w].get("t0", 0))
+                    if not active[victim].get("preempted"):
+                        stops = [victim]; active[victim]["preempted"] = True
+            for w in stops:
+                if w in active and active[w].get("tid"):
+                    board[("stop", active[w]["tid"])] = True
+                    log(f"manual: stopped worker {w} (n={active[w]['n']})")
             try: msg = out_q.get(timeout=0.3)
             except queue.Empty: msg = None
             if msg:
@@ -622,6 +689,7 @@ def write_live(args, D, ns, table, workers, events, t_start, searches):
             "updated": time.time(), "started": t_start, "uptime": time.time() - t_start,
             "workers": workers, "steps_per_sec": rate, "events": events[-80:], "searches": searches,
             "plan_taken": args.plan_state["taken"] if hasattr(args, "plan_state") else [],
+            "control": {k: args.control[k] for k in ("forced", "queue", "blocked")} if hasattr(args, "control") else {},
             "table": {n: slim(n, table[n]) for n in sorted(table) if n <= max(ns)}}
     atomic_json(os.path.join(args.res, "live.json"), live)
     if not args.no_dashboard:

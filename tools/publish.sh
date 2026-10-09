@@ -23,7 +23,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && git push -q -f && ec
     last_shot=$now; last_sig="force-site-rebuild-next-round"
   fi
   if (( now - last_research >= 300 )); then
-    git add results/best plan.json notes README.md docs/screenshot.png 2>/dev/null
+    git add results/best results/experiments.json plan.json notes README.md docs/screenshot.png web/index.html tools/build_site.py 2>/dev/null
     if ! git diff --cached --quiet; then
       git commit -qm "Results snapshot $ts
 

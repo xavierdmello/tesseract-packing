@@ -52,7 +52,7 @@ def stop_stale_experiments(max_age=1800):
             subprocess.run(["kill", "-TERM", parts[0]]); print(time.strftime("%H:%M"), "stopped stale experiment", parts[2][:90], flush=True)
 
 
-RESEARCH_CORES = 4
+TOTAL_CORES = 12
 
 
 def research_workers():
@@ -92,7 +92,9 @@ while True:
         for n in (opens[rr:] + opens[:rr])[:10]:
             q.append({"n": n, "minutes": 3, "why": "Breadth probe (round robin over open targets)."})
         old = json.load(open("plan.json")) if os.path.exists("plan.json") else {}
-        plan = {"updated": time.strftime("%Y-%m-%d %H:%M"), "max_long": 3,
+        AM = float(old.get("auto_minutes", 10))
+        for e in q: e["minutes"] = AM                 # auto mode: every run uses the user's max time, no exceptions
+        plan = {"updated": time.strftime("%Y-%m-%d %H:%M"), "max_long": 8, "auto_minutes": AM,
                 "note": ("Autonomous mode: the AI researcher is offline, so a rule-based planner is scheduling. Rules: ride n that set a "
                          "record in the last 15 min (12-min runs), grow into n+1 (8 min), and probe open breadth targets (3 min). "
                          "Skip n that failed 6 times in the last hour. Results publish automatically. "
@@ -101,18 +103,33 @@ while True:
         if old.get("auto", True):                  # manual mode (auto: false): a researcher owns plan.json; only guard the system
             json.dump(plan, open("plan.json.tmp", "w"), indent=2, ensure_ascii=False)
             os.replace("plan.json.tmp", "plan.json")
-        # watchdog: production must always run (8 cores)
+        RESEARCH_CORES = int(json.load(open("plan.json")).get("research_cores", 4))
+        PROD_CORES = max(1, TOTAL_CORES - RESEARCH_CORES)
+        # split changed? restart production with the new worker count (the watchdog below brings it back)
+        cmd = subprocess.run(["pgrep", "-fl", "src/engine.py --ns 17-130"], capture_output=True, text=True).stdout
+        m_ = re.search(r"--cpu-workers (\d+)", cmd)
+        if m_ and int(m_.group(1)) != PROD_CORES:
+            subprocess.run(["pkill", "-TERM", "-f", "src/engine.py --ns 17-130"]); time.sleep(4)
+            print(time.strftime("%H:%M"), f"core split changed: production -> {PROD_CORES}", flush=True)
+        # watchdog: the publisher must always run (pushes records to the public site within ~60 s)
+        if not subprocess.run(["pgrep", "-f", "tools/publish.sh"], capture_output=True).stdout.strip():
+            subprocess.Popen(["tools/publish.sh"], stdout=open("logs/publish.log", "a"), stderr=subprocess.STDOUT, start_new_session=True)
+            print(time.strftime("%H:%M"), "watchdog: restarted publisher", flush=True)
+        # watchdog: production must always run
         if not subprocess.run(["pgrep", "-f", "src/engine.py --ns 17-130"], capture_output=True).stdout.strip():
-            p = subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", "17-130,257-262", "--minutes", "1", "--cpu-workers", "8",
+            p = subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", "17-130,257-262", "--minutes", "1", "--cpu-workers", str(PROD_CORES),
                                   "--gpu-workers", "0", "--native", "--cpu-batch", "48"],
                                  stdout=open("logs/dashboard.log", "w"), stderr=open("logs/engine.err", "a"), start_new_session=True)
             subprocess.Popen(["caffeinate", "-i", "-w", str(p.pid)], start_new_session=True)
             print(time.strftime("%H:%M"), "watchdog: restarted production engine", flush=True)
         stop_stale_experiments()
         used, sweeping = research_workers()
+        only_sweep = sweeping and subprocess.run(["pgrep", "-f", "src/engine.py.*results_(exp|aux)"], capture_output=True, text=True).stdout.count("\n") <= 1
+        if sweeping and (used > RESEARCH_CORES or (used < RESEARCH_CORES and only_sweep)):   # resize the auto sweep
+            subprocess.run(["pkill", "-TERM", "-f", "results_exp_auto"]); time.sleep(3); used, sweeping = research_workers()
         free = RESEARCH_CORES - used
         if free > 0 and not sweeping:              # keep all 12 cores busy: fill the research budget with a breadth sweep
-            subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", SWEEP_NS, "--minutes", "5", "--cpu-workers", str(free),
+            subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", SWEEP_NS, "--minutes", str(AM if old.get("auto", True) else 5), "--cpu-workers", str(free),
                               "--gpu-workers", "0", "--native", "--port", "8889", "--results", "results_exp_auto",
                               "--label", "auto: breadth sweep (rule-based, AI offline)", "--no-dashboard"],
                              stdout=open("logs/exp_auto.out", "a"), stderr=open("logs/exp_auto.err", "a"), start_new_session=True)
@@ -125,6 +142,7 @@ while True:
     for _ in range(12):
         time.sleep(10)
         try:
-            if json.load(open("plan.json")).get("auto", True) != was: break
+            cur = json.load(open("plan.json"))
+            if (cur.get("auto", True), cur.get("auto_minutes", 10), cur.get("research_cores", 4)) != (was, old.get("auto_minutes", 10), old.get("research_cores", 4)): break
         except Exception:
             pass
