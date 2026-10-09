@@ -1,99 +1,60 @@
 {
-  "updated": "2026-10-09 14:29",
-  "max_long": 3,
-  "note": "Round 6 — native kernel live (≈400k configurations/s, 23× faster). Within two minutes it pushed 28 below Friedman's bound (2.9527) and broke s = 3 for n = 29 (2.9942): a brand-new n on the site. The fastest way to add n now is to walk the chain 30 → 40, each grown from the previous one, with 2-minute probes. Three cores stay on long runs at 82/83/101, where 10 native minutes ≈ hours of the old engine.",
+  "updated": "2026-10-09 14:34",
+  "max_long": 5,
+  "note": "Round 7. 26–29 fell quickly (29 now 2.9937), but the chain stalls at n = 30: attempts creep toward 3.00004 without crossing. Same wall as after 17, where one extra cube is cheap and the next one isn't. One longer 5-minute try each for 30 and 31, then I stop probing 32–40 until 30 breaks. The freed cores go to large n (82, 83, 101, 102), where each n can get its own value below the product bounds.",
   "insights": [
     "Native kernel: 25–50× faster per core than PyTorch (verified against autograd to 1e-14). That turned one 1.5-minute run into new records for 26, 28 and 29.",
     "The chain works: 25 (product) → 26 → 27 → 28 → 29 each beat their bound by growing the previous packing by one cube.",
-    "Records come from grow/best/shrink restarts; random starts still have zero wins.",
+    "The chain 25 → 29 broke the product/lift bounds by +1, +2, +3, +4 cubes. At +5 (n = 30) it hits s ≈ 3.0000, the trivial bound. Slack seems to run out after 4 extra cubes.",
+    "Analogy: 17 = 16 + 1 had slack, 18 = 16 + 2 did not. 25 + 1…4 had slack, 25 + 5 does not (so far).",
     "Morph v2 (slow, annealed) slightly beat random restarts on 2D n = 11 (3.8865 vs 3.8877) but neither reached the record. Inconclusive; the theorist agent is investigating.",
     "A theorist agent is proposing structural constructions and experiments on 2 dedicated cores; any certified record it finds is imported automatically."
   ],
   "queue": [
     {
       "n": 30,
-      "minutes": 2,
-      "why": "Chain: grow from 29 (just broke s = 3). Every step of this chain that drops below 3 is a new n on the site."
-    },
-    {
-      "n": 31,
-      "minutes": 2,
-      "why": "Chain: grow from 30. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
-    },
-    {
-      "n": 32,
-      "minutes": 2,
-      "why": "Chain: grow from 31. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+      "minutes": 5,
+      "why": "One longer attempt to cross s = 3 (the best try reached 3.00004)."
     },
     {
       "n": 82,
       "minutes": 10,
-      "why": "81-grid + 1 (the analogue of 17). Native kernel: 10 min now ≈ 4 hours of the old engine. Bound 3.707."
+      "why": "81-grid + 1, the analogue of 17. Bound 3.707."
     },
     {
       "n": 101,
       "minutes": 10,
-      "why": "100-product + 1. Bound 3.879 from the 11×11 product."
+      "why": "100-product + 1. Bound 3.879."
     },
     {
-      "n": 33,
-      "minutes": 2,
-      "why": "Chain: grow from 32. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
-    },
-    {
-      "n": 34,
-      "minutes": 2,
-      "why": "Chain: grow from 33. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
-    },
-    {
-      "n": 35,
-      "minutes": 2,
-      "why": "Chain: grow from 34. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+      "n": 31,
+      "minutes": 5,
+      "why": "Same as 30 (best try 3.000015)."
     },
     {
       "n": 83,
-      "minutes": 8,
+      "minutes": 10,
       "why": "81-grid + 2; grow from 82."
     },
     {
-      "n": 36,
-      "minutes": 2,
-      "why": "Chain: grow from 35. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+      "n": 102,
+      "minutes": 10,
+      "why": "100-product + 2; grow from 101."
     },
     {
-      "n": 37,
-      "minutes": 2,
-      "why": "Chain: grow from 36. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
-    },
-    {
-      "n": 38,
-      "minutes": 2,
-      "why": "Chain: grow from 37. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
-    },
-    {
-      "n": 39,
-      "minutes": 2,
-      "why": "Chain: grow from 38. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
-    },
-    {
-      "n": 40,
-      "minutes": 2,
-      "why": "Chain: grow from 39. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+      "n": 18,
+      "minutes": 3,
+      "why": "The 16-grid + 2 wall. 25× more tries per minute than before."
     },
     {
       "n": 29,
       "minutes": 2,
-      "why": "Refine the new record (2.994)."
+      "why": "Refine (2.9937)."
     },
     {
       "n": 28,
       "minutes": 2,
-      "why": "Refine (2.9527)."
-    },
-    {
-      "n": 26,
-      "minutes": 1,
-      "why": "Refine."
+      "why": "Refine (2.9508)."
     },
     {
       "n": 27,
@@ -101,14 +62,14 @@
       "why": "Refine."
     },
     {
-      "n": 17,
+      "n": 26,
       "minutes": 1,
-      "why": "Deepest record; occasional check with the fast kernel."
+      "why": "Refine."
     },
     {
-      "n": 18,
-      "minutes": 2,
-      "why": "Hardest small open question; the fast kernel gives it ~25× more tries per minute."
+      "n": 17,
+      "minutes": 1,
+      "why": "Occasional check."
     }
   ]
 }
