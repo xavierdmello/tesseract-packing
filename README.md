@@ -22,8 +22,9 @@ Branches:
 | 2–16 | 2 | grid. Lower bound via the centre lemma (numerically verified, see below) |
 | 17 | **2.577350** ≈ 2 + 1/√3 | the 16-grid plus one tilted cube. Beats the product construction 2 + 1/√2 = 2.70711 |
 | 18–25 | 2.707107 | product of two optimal 5-square packings (2 + 1/√2)² |
-| 26–29 | 2.9433–2.9937 | grown from the 25-cube product. **Better values exist in [hockyy/tesseract-packing](https://github.com/hockyy/tesseract-packing): ≈2.9428 for 26–29** |
-| 30–80 | 3 | trivial grid here. hockyy reports n = 30 at 2.98957 |
+| 26–29 | **2.942809–2.942834** ≈ 2 + 2√2/3 | matches [hockyy/tesseract-packing](https://github.com/hockyy/tesseract-packing): their packings imported and re-certified by our independent LP certifier. Structure: the opened 25-cube product frame + cross cells |
+| 30 | **2.989568** | same (imported + certified). Our reproduction of their pipeline from scratch lands within 3e-6 at n = 26 |
+| 30–80 | 3 | trivial grid here for 31+. n = 30 is 2.98957 (hockyy, verified); n = 81 is 3, optimal by volume |
 | 81 | 3 | optimal by volume |
 | 82 | **3.577350** ≈ 3 + 1/√3 | the 81-grid plus one tilted cube (same family as n = 17). Beats the 10×10 product 3.70711 |
 | 83–100 | 3.707107 | product of two 10-square packings |
@@ -37,7 +38,7 @@ A cube is `c + R·[-1/2, 1/2]^4`, where the columns of R are the cube's axes; th
 
 ## Related work
 
-- **[hockyy/tesseract-packing](https://github.com/hockyy/tesseract-packing)** (Oct 9, 2026, concurrent and independent; live page at packing.mikira.id). Same problem. They report n = 26–29 at ≈2.9428 (26 conjecturally 2 + 2√2/3) and n = 30 at 2.98957. We independently re-checked their 5 published packings with our certifier: all valid in double precision (not exact certificates — same standard as ours). The structure is the 25-cube product frame with extra cubes in "cross cells". Those are better than our values for 26–30.
+- **[hockyy/tesseract-packing](https://github.com/hockyy/tesseract-packing)** (Oct 9, 2026, concurrent and independent; live page at packing.mikira.id). Same problem. They discovered n = 26–29 at ≈2.9428 (26 conjecturally 2 + 2√2/3) and n = 30 at 2.98957. We independently re-checked all 5 published packings with our certifier (double precision, same standard as ours) and adopted them as our records at those n. The structure is the 25-cube product frame with extra cubes in "cross cells". Reproducing their pipeline from scratch (their seeds + polish + basin hopping, rebuilt from their public repo) lands within 3e-6 of their n = 26 in 3 minutes.
 - **[yoheinakajima/soft-to-rigid-packing](https://github.com/yoheinakajima/soft-to-rigid-packing)** (Oct 8, 2026): the ball → rounded cube → cube "morph" method, with a 3D record for n = 12 (2.93152). Our engine has a morph strategy inspired by it.
 - Erich Friedman, [Cubes in Cubes](https://erich-friedman.github.io/packing/cubincub/) and the [Squares in Squares survey](https://www.combinatorics.org/ojs/index.php/eljc/article/view/DS7). These are the 2D/3D baselines used for products and lifts.
 - Januszewski & Zielonka (2024), *Packing of non-blocking four-dimensional cubes into the unit cube*, and Meir–Moser (1968). These concern a different problem: volume guarantees for upright cubes of different sizes.
