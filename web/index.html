@@ -88,7 +88,8 @@ button.on { background: #222; color: #fff; }
   <p class="small" id="trivnote" style="text-align:center"></p>
   <hr>
   <p class="byline">four-dimensional analogue of Erich Friedman's <i>Squares in Squares</i> and <i>Cubes in Cubes</i></p>
-  <div id="live"><span class="dot" id="dot"></span><span id="livetxt">connecting to the local search engine…</span></div>
+  <div id="live"><span class="dot" id="dot"></span><span id="livetxt">connecting to the local search engine…</span>
+    <button id="autobtn" onclick="toggleAuto()" style="margin-left:12px;padding:2px 10px;font-size:13px;border:1px solid #ccc;border-radius:6px;cursor:pointer">…</button></div>
   <div id="bar"><div></div></div>
   <div id="news"></div>
   <hr>
@@ -444,6 +445,7 @@ function render() {
   }
   // research notebook
   if (PLAN) {
+    autoLabel();
     document.getElementById('nb-note').textContent = PLAN.note || '';
     const taken = new Set(L.plan_taken || []);
     const items = (PLAN.queue || []).map(q => {
@@ -589,6 +591,20 @@ pollPlan(); setInterval(pollPlan, 5000);
 let EXP = null;
 async function pollExp() { try { const r = await fetch('results/experiments.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) EXP = await r.json(); } catch (e) {} }
 pollExp(); setInterval(pollExp, 5000);
+// auto mode: ON = rule-based planner runs (tools/autoplan.py); OFF = the AI researcher schedules plan.json by hand.
+function autoLabel() {
+  const b = document.getElementById('autobtn'); if (!b) return;
+  const on = !!(PLAN && PLAN.auto);
+  b.textContent = on ? '⏸ stop auto mode' : '▶ start auto mode';
+  b.style.background = on ? '#fdecec' : '#e9f6ec';
+}
+async function toggleAuto() {
+  try {
+    const r = await fetch('/auto', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ auto: !(PLAN && PLAN.auto) }) });
+    if (r.ok) { const j = await r.json(); if (PLAN) PLAN.auto = j.auto; autoLabel(); }
+  } catch (e) {}
+}
 async function poll() {
   try { const r = await fetch('/results/live.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) { LIVE = await r.json(); render(); } }
   catch (err) { document.getElementById('dot').className = 'dot'; document.getElementById('livetxt').textContent = 'Cannot reach the local server (is src/engine.py or src/serve.py running?).'; }
