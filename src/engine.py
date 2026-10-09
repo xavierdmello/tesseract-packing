@@ -279,6 +279,31 @@ class Quiet(SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
     def end_headers(self):
         self.send_header("Cache-Control", "no-store"); super().end_headers()
+    def do_POST(self):
+        if self.path != "/auto":
+            self.send_error(404); return
+        import subprocess as sp
+        try:
+            ln = int(self.headers.get("Content-Length", 0) or 0)
+            want = bool(json.loads(self.rfile.read(ln) or b"{}").get("auto"))
+        except Exception:
+            self.send_error(400); return
+        running = sp.run(["pgrep", "-f", "tools/autoplan.py"], capture_output=True, text=True).stdout.split()
+        if want and not running:                 # auto mode ON: start the rule-based planner
+            sp.Popen([".venv/bin/python", "tools/autoplan.py"], stdout=open("logs/autoplan.log", "a"),
+                     stderr=open("logs/autoplan.log", "a"), start_new_session=True)
+        elif not want and running:               # auto mode OFF: a human (or AI researcher) is seated
+            for pid in running: sp.run(["kill", pid])
+        try:                                     # reflect the flag in plan.json (bumps version -> reload)
+            p = json.load(open("plan.json")); p["auto"] = want
+            p["updated"] = time.strftime("%Y-%m-%d %H:%M")
+            json.dump(p, open("plan.json.tmp", "w"), indent=2, ensure_ascii=False)
+            os.replace("plan.json.tmp", "plan.json")
+        except Exception:
+            pass
+        out = json.dumps({"auto": want}).encode()
+        self.send_response(200); self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(out))); self.end_headers(); self.wfile.write(out)
 
 
 def parse_ns(spec):
@@ -460,8 +485,27 @@ def main():
         return n
 
     def accept(m_n, cfg_cubes, cfg_s, how, wid=None):
+        if m_n not in table:                         # outside this engine's range (e.g. an experiment on other n)
+            return False
         if cfg_s >= table[m_n]["s"] - 1e-9: return False
-        ok, cubes, s_cert, sep = certify_inflate(G, cfg_cubes, cfg_s)
+        # hockyy pipeline promotion (E9): squeeze the raw candidate with their augmented-Lagrangian
+        # + L-BFGS polisher first; keep it only if strictly better and certifiable.
+        try:
+            from polish_bridge import polish
+            pr = polish(cfg_cubes, cfg_s)
+            if pr and pr[0] < cfg_s - 1e-12:
+                ok2, c2, s2, sep2 = certify_inflate(G, pr[1], pr[0])
+                if ok2 and s2 < table[m_n]["s"] - 1e-9:
+                    ok, cubes, s_cert, sep = True, c2, s2, sep2
+                    how += " + AL polish (hockyy)"
+                else:
+                    ok = False
+            else:
+                ok = False
+        except Exception:
+            ok = False
+        if not ok:
+            ok, cubes, s_cert, sep = certify_inflate(G, cfg_cubes, cfg_s)
         if not ok:
             log(f"n={m_n}: candidate s={cfg_s:.6f} failed certification (sep {sep:.1e}) – discarded"); return False
         if s_cert >= table[m_n]["s"] - 1e-9: return False

@@ -43,11 +43,15 @@ start = html.index('  <p class="small" id="trivnote"')
 start = html.index("\n", start) + 1
 end = html.index("</main>")
 html = html[:start] + '  <div style="display:none">\n' + html[start:end] + "  </div>\n" + html[end:]
-intro = ('  <p class="byline" style="max-width:760px;margin:6px auto 8px">'
-         'The following pictures show <i>n</i> unit tesseracts packed inside the smallest known tesseract (of side <i>s</i>).</p>\n'
-         '  <p class="byline" style="max-width:760px;margin:0 auto 14px">'
-         '4th dimension is visualized as time: two cubes can occupy the same space, just never at the same time.</p>\n'
-         )
+intro = ('  <style>.tip{position:relative;color:#1a4fb4;text-decoration:underline dotted #1a4fb4;text-underline-offset:3px;cursor:help;outline:none}'
+         '.tip .pop{visibility:hidden;opacity:0;transition:opacity .15s;position:absolute;left:50%;top:1.6em;transform:translateX(-50%);'
+         'width:max-content;max-width:280px;background:#fff;color:#222;border:1px solid #bbb;box-shadow:0 2px 8px rgba(0,0,0,.12);'
+         'padding:6px 10px;font-size:14.5px;line-height:1.35;z-index:20;text-align:center}'
+         '.tip:hover .pop,.tip:focus .pop{visibility:visible;opacity:1}</style>\n'
+         '  <p class="byline" style="max-width:900px;margin:6px auto 14px">'
+         'The following pictures show <i>n</i> unit tesseracts packed inside the smallest known tesseract (of side <i>s</i>), '
+         'with the <span class="tip" tabindex="0">4th dimension shown as time'
+         '<span class="pop">Two cubes can occupy the same space, just never at the same time.</span></span>.</p>\n')
 html = html.replace("  <h1>Tesseracts in Tesseracts</h1>\n", "  <h1>Tesseracts in Tesseracts</h1>\n" + intro, 1)
 html = html.replace("</main>",
                     '  <p class="byline" style="margin:24px auto 0">Click a picture for alternative visualizations.</p>\n'

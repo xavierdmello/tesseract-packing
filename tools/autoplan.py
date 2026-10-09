@@ -14,8 +14,11 @@ import json, os, re, subprocess, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
-BREADTH = list(range(17, 31)) + [82, 83, 84, 85, 86, 101, 102, 103, 104, 105, 121, 122, 123, 124, 125, 257]
-SWEEP_NS = "102-110,122-128,31-36"
+# Fresh-n breadth first: the gallery only shows n that have coordinates. These have never been drawn.
+FRESH = [31, 32, 33, 34, 35, 36, 37, 38, 122, 123, 124, 125, 126, 127, 128, 258, 259, 260]
+BREADTH = list(range(17, 31)) + [82, 83, 84, 85, 86, 101, 102, 103, 104, 105, 121, 122, 123, 124, 125, 257] + FRESH
+SWEEP_NS = "31-36,122-128,258-262"          # research-core sweep: frontier, never-drawn n
+MAX_MINUTES = 15                            # engine caps long tasks here; record rides only (never more)
 
 
 def parse_events(since):
@@ -78,11 +81,12 @@ while True:
                          "Skip n that failed 6 times in the last hour. Results publish automatically. "
                          f"Hot now: {hot[:3] or 'none'}; cooling off: {sorted(cold) or 'none'}."),
                 "insights": old.get("insights", []), "queue": q, "auto": True}
-        json.dump(plan, open("plan.json.tmp", "w"), indent=2, ensure_ascii=False)
-        os.replace("plan.json.tmp", "plan.json")
+        if old.get("auto", True):                  # manual mode (auto: false): a researcher owns plan.json; only guard the system
+            json.dump(plan, open("plan.json.tmp", "w"), indent=2, ensure_ascii=False)
+            os.replace("plan.json.tmp", "plan.json")
         # watchdog: production must always run (8 cores)
         if not subprocess.run(["pgrep", "-f", "src/engine.py --ns 17-130"], capture_output=True).stdout.strip():
-            p = subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", "17-130,257", "--minutes", "1", "--cpu-workers", "8",
+            p = subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", "17-130,257-262", "--minutes", "1", "--cpu-workers", "8",
                                   "--gpu-workers", "0", "--native", "--cpu-batch", "48"],
                                  stdout=open("logs/dashboard.log", "w"), stderr=open("logs/engine.err", "a"), start_new_session=True)
             subprocess.Popen(["caffeinate", "-i", "-w", str(p.pid)], start_new_session=True)
