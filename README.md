@@ -2,6 +2,7 @@
   <a href="https://xavierdmello.github.io/tesseract-packing/"><img src="docs/screenshot.png" alt="Tesseracts in Tesseracts: live website" width="100%"></a>
 </p>
 <p align="center"><b>Live website: <a href="https://xavierdmello.github.io/tesseract-packing/">https://xavierdmello.github.io/tesseract-packing/</a></b></p>
+<p align="center">Inspired by: <a href="https://erich-friedman.github.io/packing/cubincub/">cube packing</a> and <a href="https://erich-friedman.github.io/packing/squinsqu/">square packing</a></p>
 
 # tesseract-packing (site branch)
 
