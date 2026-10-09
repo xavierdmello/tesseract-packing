@@ -44,8 +44,7 @@ start = html.index("\n", start) + 1
 end = html.index("</main>")
 html = html[:start] + '  <div style="display:none">\n' + html[start:end] + "  </div>\n" + html[end:]
 intro = ('  <p class="byline" style="max-width:760px;margin:6px auto 8px">'
-         'The following pictures show <i>n</i> unit tesseracts packed inside the smallest known tesseract (of side <i>s</i>). '
-         'For all other values of <i>n</i>, the trivial packing is the best known.</p>\n'
+         'The following pictures show <i>n</i> unit tesseracts packed inside the smallest known tesseract (of side <i>s</i>).</p>\n'
          '  <p class="byline" style="max-width:760px;margin:0 auto 14px">'
          '4th dimension is visualized as time: two cubes can occupy the same space, just never at the same time.</p>\n'
          '  <p class="byline" style="margin:-8px auto 14px;font-size:15px;color:#555">Inspired by: <a href="https://erich-friedman.github.io/packing/cubincub/">cube packing</a> and <a href="https://kingbird.myphotos.cc/packing/squares_in_squares.html">square packing</a></p>\n')
