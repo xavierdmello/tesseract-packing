@@ -84,7 +84,7 @@ button.on { background: #222; color: #fff; }
 <body>
 <main>
   <h1>Tesseracts in Tesseracts</h1>
-  <p class="byline" style="max-width:760px;margin:6px auto 14px">4th dimension is visualized as time: two cubes can occupy the same space, just never at the same time. Click a picture for alternative visualizations.</p>
+  <p class="byline" style="max-width:760px;margin:6px auto 14px">4th dimension is visualized as time: two cubes can occupy the same space, just never at the same time.<br>Click a picture for alternative visualizations.</p>
   <div class="grid" id="grid"></div>
   <p class="small" id="trivnote" style="text-align:center"></p>
   <div style="display:none">
@@ -210,6 +210,14 @@ const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
 // ---------------------------------------------------------------- colours & lifetimes
 const hue = i => (i * 137.508 + 200) % 360;
 const col = (i, l) => `hsl(${hue(i).toFixed(1)}, 42%, ${l.toFixed(1)}%)`;
+function busiestW(e, axis = 3) {
+  let best = e.s / 2, bc = -1;
+  for (let i = 1; i < 60; i++) {
+    const w = e.s * i / 60, c = e.cubes.filter(q => { const iv = lifetime(q, axis); return w > iv[0] && w < iv[1]; }).length;
+    if (c > bc) { bc = c; best = w; }
+  }
+  return best;
+}
 function lifetime(q, axis) {          // interval of the time axis where tesseract q exists
   const h = 0.5 * (Math.abs(q.R[axis][0]) + Math.abs(q.R[axis][1]) + Math.abs(q.R[axis][2]) + Math.abs(q.R[axis][3]));
   return [q.c[axis] - h, q.c[axis] + h];
@@ -365,7 +373,15 @@ const movies = new Map();   // canvas -> {e}
 const visible = new Set();
 const io = new IntersectionObserver(es => es.forEach(x => x.isIntersecting ? visible.add(x.target) : visible.delete(x.target)), { rootMargin: '200px' });
 const PERIOD = 8000;
-const phaseW = (e, t) => { const ph = (t % PERIOD) / PERIOD; return e.s * Math.min(1, Math.max(0, (ph - 0.04) / 0.92)); };
+const phaseW = (e, t) => {      // sweep only where cubes exist, starting at the busiest moment
+  if (e._lo === undefined) {
+    const iv = e.cubes.map(q => lifetime(q, 3));
+    e._lo = Math.max(0, Math.min(...iv.map(x => x[0]))); e._hi = Math.min(e.s, Math.max(...iv.map(x => x[1])));
+    e._ph0 = (busiestW(e) - e._lo) / Math.max(1e-9, e._hi - e._lo);
+  }
+  const ph = ((t % PERIOD) / PERIOD + e._ph0) % 1;
+  return e._lo + (e._hi - e._lo) * (0.01 + 0.98 * ph);
+};
 
 function render() {
   const citedNs = [];
@@ -442,7 +458,7 @@ function render() {
       `<div class="cap">s = ${fmtS(e.s)}</div><div class="who">${who}</div>` +
       `<div class="note">${searching ? (g.lo === g.hi ? 'searching now…' : `searching n = ${inG.join(', ')} now…`) : note}</div>`;
     if (pic) { const mv = cell.querySelector('canvas.mv'), tl = cell.querySelector('canvas.tl'); movies.set(mv, { e: pic, tl }); io.observe(mv);
-      const w0 = phaseW(pic, performance.now());              // static first frame, independent of the animation loop
+      const w0 = busiestW(pic);                              // static first frame: the moment with the most cubes alive
       drawSlice(mv.getContext('2d'), 480, pic, 3, w0, -0.62, 0.42); drawTimeline(tl.getContext('2d'), 480, tl.height, pic, 3, w0, { thick: 3 }); }
     cell.onclick = () => pic && openViewer(g.hi, lab, pic);
   });
