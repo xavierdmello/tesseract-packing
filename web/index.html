@@ -342,10 +342,11 @@ function caption(e) {
   if ((m = src.match(/^(\d+)-cube 3D packing/))) return [`Two layers of a ${m[1]}-cube 3D packing.`, '3D packing found by our search'];
   if (e.cited) return [`Friedman's 3D ${/13-cube/.test(src) ? 13 : 14}-cube packing, two layers.`,
     e.alt ? `coordinates not public; shown: our best packing, s = ${(+e.alt.s).toFixed(4)}` : 'coordinates not public; no picture'];
-  if (/removed/.test(src)) return [`From the n = ${e.derived_from} packing.`, ''];
-  if (/engine/.test(src)) { const d = e.found_at ? new Date(e.found_at.replace(' ', 'T')) : null;
-    const how = /morph/.test(src) ? ' (blob→cube morph)' : '';
-    return [`Found by search${how}${d ? ' on ' + d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : ''}.`, ''] }
+  const when = e.found_at ? (d => ` on ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`)(new Date(e.found_at.replace(' ', 'T'))) : '';
+  if (/removed/.test(src)) return [`From the n = ${e.derived_from} packing${when}.`, ''];
+  if (/experiment/.test(src)) return [`Found by an experiment run${when}.`, ''];
+  if (/engine/.test(src)) { const how = /morph/.test(src) ? ' (blob→cube morph)' : '';
+    return [`Found by search${how}${when}.`, ''] }
   return [src, ''];
 }
 function groups(table) {
