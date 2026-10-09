@@ -101,4 +101,11 @@ while True:
         print(time.strftime("%H:%M"), "plan:", [e["n"] for e in q], "hot", hot, "cold", sorted(cold), flush=True)
     except Exception as ex:
         print(time.strftime("%H:%M"), "autoplan error:", ex, flush=True)
-    time.sleep(120)
+    # wait up to 2 min, but react within ~10 s when the Auto button flips plan.json's "auto" flag
+    was = old.get("auto", True) if "old" in dir() else True
+    for _ in range(12):
+        time.sleep(10)
+        try:
+            if json.load(open("plan.json")).get("auto", True) != was: break
+        except Exception:
+            pass

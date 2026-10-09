@@ -288,12 +288,12 @@ class Quiet(SimpleHTTPRequestHandler):
             want = bool(json.loads(self.rfile.read(ln) or b"{}").get("auto"))
         except Exception:
             self.send_error(400); return
+        # The planner process always runs (it is also the production watchdog). The button only flips plan.json's
+        # "auto" flag: ON = the planner writes plan.json; OFF = a researcher owns plan.json (planner just guards).
         running = sp.run(["pgrep", "-f", "tools/autoplan.py"], capture_output=True, text=True).stdout.split()
-        if want and not running:                 # auto mode ON: start the rule-based planner
+        if not running:
             sp.Popen([".venv/bin/python", "tools/autoplan.py"], stdout=open("logs/autoplan.log", "a"),
                      stderr=open("logs/autoplan.log", "a"), start_new_session=True)
-        elif not want and running:               # auto mode OFF: a human (or AI researcher) is seated
-            for pid in running: sp.run(["kill", pid])
         try:                                     # reflect the flag in plan.json (bumps version -> reload)
             p = json.load(open("plan.json")); p["auto"] = want
             p["updated"] = time.strftime("%Y-%m-%d %H:%M")

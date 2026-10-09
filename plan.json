@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-09 17:16",
+  "updated": "2026-10-09 17:14 r11",
   "max_long": 4,
   "auto": false,
   "note": "Round 11 (Claude back as head researcher). Production was down 16:14–17:11 after a crash (n = 258 arrived from the research sweep, outside production's range). Fixed, and the watchdog now always runs. Strategy: the 10×10-frame family is the richest vein: 101 and 102 fell far below the 11×11 product, so walk it up (103, 104, …). Open 258+ by growing from the 257 conference construction (bound 4.7075 from the 17×17 product). Keep probing 122 (bound 4) and 31 (bound 3).",
