@@ -1,79 +1,114 @@
 {
-  "updated": "2026-10-09 14:22",
-  "max_long": 6,
-  "note": "Round 5, breadth first. The goal is more distinct n with a real result, not shaving existing records. The richest unexplored area is n = 82–100: all 19 share one product bound (3.707), and 82 = 81-grid + 1 is the exact analogue of 17 = 16-grid + 1, which beat its product bound by 0.13. If 82 falls, 83, 84, … can each be grown into their own value. Large n is slow, so those tasks get 12–15 minutes. The cheap 28→35 chain stays on short tasks.",
+  "updated": "2026-10-09 14:29",
+  "max_long": 3,
+  "note": "Round 6 — native kernel live (≈400k configurations/s, 23× faster). Within two minutes it pushed 28 below Friedman's bound (2.9527) and broke s = 3 for n = 29 (2.9942): a brand-new n on the site. The fastest way to add n now is to walk the chain 30 → 40, each grown from the previous one, with 2-minute probes. Three cores stay on long runs at 82/83/101, where 10 native minutes ≈ hours of the old engine.",
   "insights": [
-    "Records so far: 17 (2.5784), 26 (2.9506), 27 (2.9512). Every one came from \"grow\" (best (n−1) packing + 1 cube) or \"best\" restarts.",
-    "Long searches pay off while a record is still falling: n = 27 went 2.9818 → 2.9512 in one 10-minute run.",
-    "One minute is useless for n ≥ ~50: the search doesn't even reach a valid packing in that time. Each step costs ~n² pair checks.",
-    "Top-down shots below s = 3 at n = 40 or 60 look hopeless for now. Even in 3D, nothing above 14 cubes fits below 3.",
-    "I believe n = 18–25 need ≈2.707 (no movement in ~30 min of search). In 2D, 5 squares get a cheap trick but 6 need side 3."
+    "Native kernel: 25–50× faster per core than PyTorch (verified against autograd to 1e-14). That turned one 1.5-minute run into new records for 26, 28 and 29.",
+    "The chain works: 25 (product) → 26 → 27 → 28 → 29 each beat their bound by growing the previous packing by one cube.",
+    "Records come from grow/best/shrink restarts; random starts still have zero wins.",
+    "Morph v2 (slow, annealed) slightly beat random restarts on 2D n = 11 (3.8865 vs 3.8877) but neither reached the record. Inconclusive; the theorist agent is investigating.",
+    "A theorist agent is proposing structural constructions and experiments on 2 dedicated cores; any certified record it finds is imported automatically."
   ],
   "queue": [
     {
-      "n": 82,
-      "minutes": 15,
-      "why": "81-grid + 1, the analogue of 17. Bound 3.707 from the 10×10 product. Grow from the 81-grid; a 4D-native packing could be well below."
-    },
-    {
-      "n": 101,
-      "minutes": 15,
-      "why": "10×10 product + 1. Bound 3.879 from the 11×11 product. Grow from 100 (3.707)."
-    },
-    {
-      "n": 28,
-      "minutes": 8,
-      "why": "Beat Friedman's 2.98995 by growing from 27 (2.9512). Unlocks the 29+ chain."
-    },
-    {
-      "n": 29,
-      "minutes": 4,
-      "why": "First n with only the trivial s = 3. Grow from 28."
-    },
-    {
-      "n": 83,
-      "minutes": 12,
-      "why": "81-grid + 2. Gets its own value if the 82 trick generalises; grow from 82."
-    },
-    {
       "n": 30,
-      "minutes": 3,
-      "why": "Chain continuation from 29."
-    },
-    {
-      "n": 102,
-      "minutes": 12,
-      "why": "100-product + 2; grow from 101."
+      "minutes": 2,
+      "why": "Chain: grow from 29 (just broke s = 3). Every step of this chain that drops below 3 is a new n on the site."
     },
     {
       "n": 31,
-      "minutes": 3,
-      "why": "Chain continuation."
-    },
-    {
-      "n": 26,
       "minutes": 2,
-      "why": "Still creeping down (2.9506); cheap refinement."
-    },
-    {
-      "n": 27,
-      "minutes": 3,
-      "why": "Cheap refinement after its long run."
-    },
-    {
-      "n": 17,
-      "minutes": 2,
-      "why": "Deepest record; occasional check."
+      "why": "Chain: grow from 30. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
     },
     {
       "n": 32,
-      "minutes": 3,
-      "why": "Chain continuation."
+      "minutes": 2,
+      "why": "Chain: grow from 31. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 82,
+      "minutes": 10,
+      "why": "81-grid + 1 (the analogue of 17). Native kernel: 10 min now ≈ 4 hours of the old engine. Bound 3.707."
+    },
+    {
+      "n": 101,
+      "minutes": 10,
+      "why": "100-product + 1. Bound 3.879 from the 11×11 product."
+    },
+    {
+      "n": 33,
+      "minutes": 2,
+      "why": "Chain: grow from 32. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 34,
+      "minutes": 2,
+      "why": "Chain: grow from 33. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 35,
+      "minutes": 2,
+      "why": "Chain: grow from 34. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 83,
+      "minutes": 8,
+      "why": "81-grid + 2; grow from 82."
+    },
+    {
+      "n": 36,
+      "minutes": 2,
+      "why": "Chain: grow from 35. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 37,
+      "minutes": 2,
+      "why": "Chain: grow from 36. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 38,
+      "minutes": 2,
+      "why": "Chain: grow from 37. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 39,
+      "minutes": 2,
+      "why": "Chain: grow from 38. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 40,
+      "minutes": 2,
+      "why": "Chain: grow from 39. Native speed makes a 2-minute probe enough to tell whether s < 3 is reachable."
+    },
+    {
+      "n": 29,
+      "minutes": 2,
+      "why": "Refine the new record (2.994)."
+    },
+    {
+      "n": 28,
+      "minutes": 2,
+      "why": "Refine (2.9527)."
+    },
+    {
+      "n": 26,
+      "minutes": 1,
+      "why": "Refine."
+    },
+    {
+      "n": 27,
+      "minutes": 1,
+      "why": "Refine."
+    },
+    {
+      "n": 17,
+      "minutes": 1,
+      "why": "Deepest record; occasional check with the fast kernel."
     },
     {
       "n": 18,
       "minutes": 2,
-      "why": "Hardest small open question, kept warm."
+      "why": "Hardest small open question; the fast kernel gives it ~25× more tries per minute."
     }
   ]
 }
