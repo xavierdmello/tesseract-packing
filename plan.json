@@ -1,75 +1,69 @@
 {
-  "updated": "2026-10-09 14:34",
+  "updated": "2026-10-09 14:52",
   "max_long": 5,
-  "note": "Round 7. 26–29 fell quickly (29 now 2.9937), but the chain stalls at n = 30: attempts creep toward 3.00004 without crossing. Same wall as after 17, where one extra cube is cheap and the next one isn't. One longer 5-minute try each for 30 and 31, then I stop probing 32–40 until 30 breaks. The freed cores go to large n (82, 83, 101, 102), where each n can get its own value below the product bounds.",
+  "note": "Round 8. Two developments. (1) The theorist agent found a closed-form family: k⁴ + 1 tesseracts fit in side k + 1/√3, the k-grid plus one cube tilted along a body diagonal. That gives n = 17 at 2.57735 and n = 82 at 3.57735, beating the products by 0.13. (2) A concurrent project (hockyy/tesseract-packing) has better values than ours for 26–30, so those are no longer our frontier. Breadth now means: 122+ (nothing below 4 is known; 121 + 1 is the analogue of 25 + 1 → 26, which fell well below 3), grow 82 → 83, 84 and 101 → 102, and keep probing 31 (nobody has anything below 3 there).",
   "insights": [
-    "Native kernel: 25–50× faster per core than PyTorch (verified against autograd to 1e-14). That turned one 1.5-minute run into new records for 26, 28 and 29.",
-    "The chain works: 25 (product) → 26 → 27 → 28 → 29 each beat their bound by growing the previous packing by one cube.",
-    "The chain 25 → 29 broke the product/lift bounds by +1, +2, +3, +4 cubes. At +5 (n = 30) it hits s ≈ 3.0000, the trivial bound. Slack seems to run out after 4 extra cubes.",
-    "Analogy: 17 = 16 + 1 had slack, 18 = 16 + 2 did not. 25 + 1…4 had slack, 25 + 5 does not (so far).",
-    "Morph v2 (slow, annealed) slightly beat random restarts on 2D n = 11 (3.8865 vs 3.8877) but neither reached the record. Inconclusive; the theorist agent is investigating.",
-    "A theorist agent is proposing structural constructions and experiments on 2 dedicated cores; any certified record it finds is imported automatically."
+    "Closed-form family (theorist): s(k⁴ + 1) ≤ k + 1/√3. The extra cube sits in the central gap, tilted along a body diagonal.",
+    "\"Frame + 1\" works at every scale tried: 16-grid + 1, 25-product + 1, 81-grid + 1, 100-product + 1 all beat their product bounds.",
+    "n = 18 is very likely ≈ 2+1/√2: grow, best, random and morph (550 starts) all converge to 2.70711.",
+    "Related work (hockyy) gets 26–29 at ≈2.9428 and 30 at 2.98957 by inserting 45°-tilted cubes into \"cross cells\" of the opened 25-frame.",
+    "The coordinator was burning ~1 core rewriting a 3.5 MB status file every second. Fixed by slimming it."
   ],
   "queue": [
     {
-      "n": 30,
-      "minutes": 5,
-      "why": "One longer attempt to cross s = 3 (the best try reached 3.00004)."
-    },
-    {
-      "n": 82,
-      "minutes": 10,
-      "why": "81-grid + 1, the analogue of 17. Bound 3.707."
-    },
-    {
-      "n": 101,
-      "minutes": 10,
-      "why": "100-product + 1. Bound 3.879."
-    },
-    {
-      "n": 31,
-      "minutes": 5,
-      "why": "Same as 30 (best try 3.000015)."
+      "n": 122,
+      "minutes": 12,
+      "why": "11×11 product (3.879) + 1. By analogy with 25 + 1 → 26 (3 → 2.943), it may land below 4, which would be the first result past 121."
     },
     {
       "n": 83,
       "minutes": 10,
-      "why": "81-grid + 2; grow from 82."
+      "why": "Grow from the new 82 = 3 + 1/√3. If one more cube fits below 3.707, 83 gets its own value."
     },
     {
       "n": 102,
       "minutes": 10,
-      "why": "100-product + 2; grow from 101."
+      "why": "Grow from our 101 (3.8522). Bound 3.879 from the 11×11 product."
     },
     {
-      "n": 18,
+      "n": 31,
+      "minutes": 5,
+      "why": "Nobody has anything below 3 for 31. Grow from 29/30."
+    },
+    {
+      "n": 123,
+      "minutes": 6,
+      "why": "Grow from 122 if it breaks."
+    },
+    {
+      "n": 84,
+      "minutes": 5,
+      "why": "Grow from 83."
+    },
+    {
+      "n": 101,
       "minutes": 3,
-      "why": "The 16-grid + 2 wall. 25× more tries per minute than before."
+      "why": "Refine (3.8522)."
     },
     {
-      "n": 29,
-      "minutes": 2,
-      "why": "Refine (2.9937)."
-    },
-    {
-      "n": 28,
-      "minutes": 2,
-      "why": "Refine (2.9508)."
-    },
-    {
-      "n": 27,
-      "minutes": 1,
-      "why": "Refine."
-    },
-    {
-      "n": 26,
-      "minutes": 1,
-      "why": "Refine."
+      "n": 30,
+      "minutes": 3,
+      "why": "We're at 3; hockyy has 2.98957. Cheap probe with grow from 29."
     },
     {
       "n": 17,
       "minutes": 1,
-      "why": "Occasional check."
+      "why": "Check whether anything beats 2 + 1/√3."
+    },
+    {
+      "n": 82,
+      "minutes": 2,
+      "why": "Check whether anything beats 3 + 1/√3."
+    },
+    {
+      "n": 18,
+      "minutes": 1,
+      "why": "Kept warm, low priority (evidence says ≈2.7071)."
     }
   ]
 }
