@@ -39,9 +39,8 @@ def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph
     dtype = torch.float32 if device == "mps" else torch.float64
     rng = np.random.default_rng(wid * 7919 + int(time.time()))
     mix = np.array(MIXES[wid % len(MIXES)], float)
-    if allowed:
-        mix = mix * np.array([st in allowed for st in STRATS], float)
-        if mix.sum() == 0: mix = np.array([st in allowed for st in STRATS], float)
+    if allowed and set(allowed) != set(STRATS):
+        mix = np.array([st in allowed for st in STRATS], float)   # explicit strategy list: equal weights
     lr_choices = [0.003, 0.006, 0.012, 0.02]
     cfg_cache = {}
 
