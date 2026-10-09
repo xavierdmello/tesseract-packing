@@ -299,6 +299,8 @@ class Quiet(SimpleHTTPRequestHandler):
                 b = json.loads(self.rfile.read(ln) or b"{}")
                 a = b.get("action"); n = int(b["n"]) if "n" in b else None
                 mins = max(0.5, min(60.0, float(b.get("minutes", 10))))
+                if n is not None and n < 1:
+                    self.send_error(400, "n must be a positive integer"); return
                 with CONTROL["lock"]:
                     if a == "force": CONTROL["forced"].append({"n": n, "minutes": mins})
                     elif a == "queue_add": CONTROL["queue"].append({"n": n, "minutes": mins})
@@ -457,6 +459,7 @@ def main():
 
     os.chdir(ROOT)
     httpd = ThreadingHTTPServer(("127.0.0.1", args.port), Quiet)
+    httpd.valid_ns = set(table)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
 
     events = []
@@ -497,11 +500,23 @@ def main():
 
     mq_state = {"i": 0}
 
+    def ensure_n(n):
+        """Unbounded n: create a table entry on demand (trivial grid packing) so any n can be searched."""
+        if n in table: return
+        sg, cubes = G.grid_packing(n, D)
+        for q in cubes: q["p"] = [1.0, 0, 0, 0, 1.0, 0, 0, 0]
+        table[n] = {"n": n, "s": sg, "cubes": cubes, "source": "grid (trivial)", "certified": True, "history": [],
+                    "lower": max(n ** (1 / D), 2.0 if n >= 2 else 1.0), "search": None}
+        board[(D, n)] = {"s": sg, "cubes": cubes}
+        searches.setdefault(n, 0)
+        log(f"manual: added n={n} (starts from the trivial grid, s={sg:g})")
+
     def next_task():
         """(n, minutes): forced runs first, then the manual queue, then the plan. Blocked n are never scheduled."""
         busy = {a["n"] for a in active.values()}
         with CONTROL["lock"]:
             blocked = set(CONTROL["blocked"])
+            for e in CONTROL["forced"] + CONTROL["queue"]: ensure_n(e["n"])
             while CONTROL["forced"]:
                 e = CONTROL["forced"].pop(0)
                 if e["n"] in table and e["n"] not in busy:
@@ -690,7 +705,7 @@ def write_live(args, D, ns, table, workers, events, t_start, searches):
             "workers": workers, "steps_per_sec": rate, "events": events[-80:], "searches": searches,
             "plan_taken": args.plan_state["taken"] if hasattr(args, "plan_state") else [],
             "control": {k: args.control[k] for k in ("forced", "queue", "blocked")} if hasattr(args, "control") else {},
-            "table": {n: slim(n, table[n]) for n in sorted(table) if n <= max(ns)}}
+            "table": {n: slim(n, table[n]) for n in sorted(table)}}
     atomic_json(os.path.join(args.res, "live.json"), live)
     if not args.no_dashboard:
         out = ["\033[H\033[2J", f" 4D tesseract packing (farm) | {rate:,.0f} config-steps/s | http://localhost:{args.port}", "",

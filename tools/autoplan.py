@@ -117,7 +117,7 @@ while True:
             print(time.strftime("%H:%M"), "watchdog: restarted publisher", flush=True)
         # watchdog: production must always run
         if not subprocess.run(["pgrep", "-f", "src/engine.py --ns 17-130"], capture_output=True).stdout.strip():
-            p = subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", "17-130,257-262", "--minutes", "1", "--cpu-workers", str(PROD_CORES),
+            p = subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", "17-130,131-400,2-16", "--minutes", "1", "--cpu-workers", str(PROD_CORES),
                                   "--gpu-workers", "0", "--native", "--cpu-batch", "48"],
                                  stdout=open("logs/dashboard.log", "w"), stderr=open("logs/engine.err", "a"), start_new_session=True)
             subprocess.Popen(["caffeinate", "-i", "-w", str(p.pid)], start_new_session=True)
