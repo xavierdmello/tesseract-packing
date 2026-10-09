@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-09 17:34",
+  "updated": "2026-10-09 17:41",
   "max_long": 8,
   "auto_minutes": 10.0,
   "note": "Autonomous mode: the AI researcher is offline, so a rule-based planner is scheduling. Rules: ride n that set a record in the last 15 min (12-min runs), grow into n+1 (8 min), and probe open breadth targets (3 min). Skip n that failed 6 times in the last hour. Results publish automatically. Hot now: none; cooling off: none.",
