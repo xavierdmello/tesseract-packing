@@ -6,3 +6,5 @@ results/live.json.tmp
 results/events.log
 results_*/
 *.tmp
+third_party/hockyy/bin/
+notes/private/

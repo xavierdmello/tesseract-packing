@@ -6,7 +6,8 @@ to the raw candidate, so a missing binary can never break the engine.
 """
 import json, math, os, subprocess, tempfile
 
-POLISH = os.environ.get("HPOLISH", "/tmp/hockyy_tp/polish")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+POLISH = os.environ.get("HPOLISH") or next((p for p in (os.path.join(_HERE, "..", "third_party", "hockyy", "bin", "polish"), "/tmp/hockyy_tp/polish") if os.path.exists(p)), "/tmp/hockyy_tp/polish")
 
 
 def to_hockyy(cubes, s):
