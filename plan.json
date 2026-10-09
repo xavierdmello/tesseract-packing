@@ -1,8 +1,8 @@
 {
-  "updated": "2026-10-09 17:46",
+  "updated": "2026-10-09 17:50",
   "max_long": 8,
   "auto_minutes": 10.0,
-  "note": "Autonomous mode: the AI researcher is offline, so a rule-based planner is scheduling. Rules: ride n that set a record in the last 15 min (12-min runs), grow into n+1 (8 min), and probe open breadth targets (3 min). Skip n that failed 6 times in the last hour. Results publish automatically. Hot now: none; cooling off: [31, 102, 258].",
+  "note": "Autonomous mode: the AI researcher is offline, so a rule-based planner is scheduling. Rules: ride n that set a record in the last 15 min (12-min runs), grow into n+1 (8 min), and probe open breadth targets (3 min). Skip n that failed 6 times in the last hour. Results publish automatically. Hot now: none; cooling off: [31, 102, 258, 300].",
   "insights": [
     "n = 101 broke well below the 11x11 product (3.879 -> 3.774) by growing the 10x10 product frame. The product frame + 1 trick scales up.",
     "Conjecture: s(17) = 2 + 1/sqrt3, the 4D analogue of s(5) = 2 + 1/sqrt2. More generally, s(k^4 + 1) <= k + 1/sqrt3 for every k.",
@@ -13,52 +13,52 @@
   ],
   "queue": [
     {
-      "n": 125,
+      "n": 83,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 126,
+      "n": 84,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 127,
+      "n": 85,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 128,
+      "n": 86,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 259,
+      "n": 101,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 260,
+      "n": 103,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 17,
+      "n": 104,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 18,
+      "n": 105,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 19,
+      "n": 121,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 20,
+      "n": 122,
       "minutes": 10.0,
       "why": "Breadth probe (round robin over open targets)."
     }
