@@ -80,6 +80,13 @@ while True:
                 "insights": old.get("insights", []), "queue": q, "auto": True}
         json.dump(plan, open("plan.json.tmp", "w"), indent=2, ensure_ascii=False)
         os.replace("plan.json.tmp", "plan.json")
+        # watchdog: production must always run (8 cores)
+        if not subprocess.run(["pgrep", "-f", "src/engine.py --ns 17-130"], capture_output=True).stdout.strip():
+            p = subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", "17-130,257", "--minutes", "1", "--cpu-workers", "8",
+                                  "--gpu-workers", "0", "--native", "--cpu-batch", "48"],
+                                 stdout=open("logs/dashboard.log", "w"), stderr=open("logs/engine.err", "a"), start_new_session=True)
+            subprocess.Popen(["caffeinate", "-i", "-w", str(p.pid)], start_new_session=True)
+            print(time.strftime("%H:%M"), "watchdog: restarted production engine", flush=True)
         stop_stale_experiments()
         if not research_running():
             subprocess.Popen([".venv/bin/python", "src/engine.py", "--ns", SWEEP_NS, "--minutes", "5", "--cpu-workers", "4",
