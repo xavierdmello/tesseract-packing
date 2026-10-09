@@ -47,5 +47,18 @@ html = html.replace("fetch('/plan.json?t=' + Date.now()", "fetch('data.json?t=' 
 html = html.replace("poll(); setInterval(poll, 2000);",
                     "poll(); setInterval(poll, 300000);\n"
                     "")
+# public captions: just "Found <date>." for anything found by search, experiment, or derived from a found packing
+override = '''
+const _caption = caption;
+caption = function (e) {
+  const r = _caption(e);
+  if (e.found_at && !/^(grid|product)/.test(e.source || '')) {
+    const d = new Date(e.found_at.replace(' ', 'T'));
+    return ['Found ' + d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + '.', ''];
+  }
+  return r;
+};
+'''
+html = html.replace("</script>\n</body>", override + "</script>\n</body>")
 open(os.path.join(out, "index.html"), "w").write(html)
 print("built", out, os.path.getsize(os.path.join(out, "data.json")) // 1024, "KB data")
