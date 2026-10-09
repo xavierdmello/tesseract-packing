@@ -31,7 +31,7 @@ MIXES = [  # per-worker strategy probabilities (best, grow, shrink, random, morp
 
 
 # =============================================================== worker
-def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph_cfg=None):
+def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph_cfg=None, native=False):
     import torch
     import numpy as np
     from kernel import Batch
@@ -129,20 +129,28 @@ def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph
 
         with torch.no_grad():
             init(torch.arange(B, device=m.dev))
-        for t in m.params(): t.requires_grad_(True)
-        opt = torch.optim.Adam(m.params(), lr=lr)
+        use_native = native and D == 4 and device == "cpu"
+        if use_native:
+            import nkernel
+            na = nkernel.NativeAdam(m, lr, prune=True)
+        else:
+            for t in m.params(): t.requires_grad_(True)
+            opt = torch.optim.Adam(m.params(), lr=lr)
         target = (board.get((D, n)) or {}).get("s", float("inf"))
         t0 = time.time(); last_rep = 0; last_board = 0; steps = 0
         task_best = float("inf")
         inner = 100
         while time.time() < deadline:
             if os.getppid() != ppid: os._exit(0)          # parent died: never linger as an orphan
-            for _ in range(inner):
-                opt.zero_grad(set_to_none=True)
-                pen, _ = m.violation(); pen.sum().backward(); opt.step()
+            if use_native:
+                pen, mx = na.steps(inner)
+            else:
+                for _ in range(inner):
+                    opt.zero_grad(set_to_none=True)
+                    pen, _ = m.violation(); pen.sum().backward(); opt.step()
             steps += inner
             with torch.no_grad():
-                pen, mx = m.violation()
+                if not use_native: pen, mx = m.violation()
                 feas = mx < m.margin * 0.5
                 rigid = m.r <= 0
                 stalls += (~feas & rigid).long()
@@ -203,9 +211,11 @@ def worker_main(wid, D, task_q, out_q, board, device, batch, allowed=None, morph
                         if hit_s is not None and float(elem_best[e_]) <= hit_s: stats["hits"][st_] += 1
                     elem_best[dead] = float("inf")
                     init(dead); stalls[dead] = 0; fac[dead] = 0.996
-                    for t in m.params():
-                        st = opt.state.get(t)
-                        if st: st["exp_avg"][dead] = 0; st["exp_avg_sq"][dead] = 0
+                    if use_native: na.reset(dead)
+                    else:
+                        for t in m.params():
+                            st = opt.state.get(t)
+                            if st: st["exp_avg"][dead] = 0; st["exp_avg_sq"][dead] = 0
             if time.time() - last_board > 2:
                 last_board = time.time()
                 target = min(target, (board.get((D, n)) or {}).get("s", float("inf")))
@@ -284,6 +294,7 @@ def main():
     ap.add_argument("--stall-seconds", type=float, default=20, help="end an n early after this long without a record")
     ap.add_argument("--morph-k", default="8,40", help="morph lasts K rounds of 100 steps, K uniform in this range")
     ap.add_argument("--morph-noise", type=float, default=0.0, help="annealing noise amplitude during morph")
+    ap.add_argument("--native", action="store_true", help="use the C kernel (D=4, CPU)")
     ap.add_argument("--hit-s", type=float, default=None, help="experiments: count starts that reach s <= this")
     ap.add_argument("--dim", type=int, default=4)
     ap.add_argument("--strategies", default=",".join(STRATS))
@@ -339,7 +350,7 @@ def main():
     specs = [("cpu", args.cpu_batch)] * args.cpu_workers + [("mps", args.gpu_batch)] * args.gpu_workers
     for wid, (dev, b) in enumerate(specs):
         pr = mp.Process(target=worker_main, args=(wid, D, task_q, out_q, board, dev, b, args.strategies.split(","),
-                                                      {"k": tuple(int(x) for x in args.morph_k.split(",")), "noise": args.morph_noise}), daemon=True)
+                                                      {"k": tuple(int(x) for x in args.morph_k.split(",")), "noise": args.morph_noise}, args.native), daemon=True)
         pr.start(); procs.append(pr); workers[wid] = {"state": "starting", "device": dev}
     NW = len(specs)
 
