@@ -70,3 +70,10 @@ Each entry gives the hypothesis, the setup, the result and the decision. All tim
   - Container violation ≤ 4e-15 (floating-point noise).
   - Minimum pair separation 0. The packings are tight: cubes touch.
 - **Status:** claims verified to double precision by an independent checker. Not an exact certificate (neither are ours).
+
+## E8: Structured "seed" strategy (theory_seeds) on n = 30, 31 — 15:02–15:13, 1 core each
+- **Strategies:** seed, grow, best (equal weights). 10 min each.
+- **Result:** no improvement.
+  - n = 30: best 3.000014 (163 best, 168 grow, 140 seed starts).
+  - n = 31: best 3.000028 (~600 starts).
+- **Conclusion:** our rough cross-cell seeds plus Adam relaxation don't reach hockyy's n = 30 (2.98957). Their pipeline adds structured enumeration (tenum) and an exact augmented-Lagrangian + L-BFGS polish, which we lack. Next: E9 evaluates their code directly.
