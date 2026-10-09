@@ -1,7 +1,7 @@
 {
-  "updated": "2026-10-09 15:15",
-  "max_long": 6,
-  "note": "Round 10. n = 101 is falling fast (3.8505 → 3.778 in minutes via grow), so it gets a 15-minute slot, with 102 grown from it next. 83–85 stay on long runs (best tries 3.735–3.78, bar 3.7071). 122 is hovering just above 4 (4.007). On the research cores: E9 runs hockyy's own pipeline (cross-cell enumeration + polish) on n = 30 to see whether it beats our engine there.",
+  "updated": "2026-10-09 15:17",
+  "max_long": 3,
+  "note": "Autonomous mode: the AI researcher is offline, so a rule-based planner is scheduling. Rules: ride n that set a record in the last 15 min (12-min runs), grow into n+1 (8 min), and probe open breadth targets (3 min). Skip n that failed 6 times in the last hour. Results publish automatically. Hot now: [101]; cooling off: [18, 30, 31, 102].",
   "insights": [
     "n = 101 broke well below the 11×11 product (3.879 → 3.778) by growing the 10×10 product frame. The product frame + 1 trick scales up.",
     "Conjecture: s(17) = 2 + 1/√3, the 4D analogue of s(5) = 2 + 1/√2. More generally, s(k⁴ + 1) ≤ k + 1/√3 for every k.",
@@ -13,48 +13,59 @@
   "queue": [
     {
       "n": 101,
-      "minutes": 15,
-      "why": "Hot: dropping ~0.001 every few seconds (3.8505 → 3.778). Ride it."
-    },
-    {
-      "n": 102,
       "minutes": 12,
-      "why": "Grow from the improving 101; bound 3.879."
+      "why": "Hot: set a record 1 min ago. Long run while it's still falling."
     },
     {
-      "n": 83,
-      "minutes": 15,
-      "why": "Theorist: growing from 82 = 3 + 1/√3 reached 3.709875, only 0.003 above the 3.7071 bound. 15 minutes may cross it, and 83 would get its own value."
-    },
-    {
-      "n": 122,
-      "minutes": 12,
-      "why": "11×11 product + 1. If it lands below 4, it's the first result past 121."
-    },
-    {
-      "n": 84,
-      "minutes": 15,
-      "why": "Same idea as 83, two cubes beyond the 81-grid."
-    },
-    {
-      "n": 85,
-      "minutes": 10,
-      "why": "Continue 83, 84 if either breaks."
-    },
-    {
-      "n": 30,
+      "n": 21,
       "minutes": 3,
-      "why": "We're at 3; hockyy has 2.98957. Cheap probe."
+      "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 17,
-      "minutes": 1,
-      "why": "Check against the conjectured optimum 2 + 1/√3."
+      "n": 22,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
     },
     {
-      "n": 18,
-      "minutes": 1,
-      "why": "Low priority: the theorist argues only the centre cell can take an extra cube in a 2⁴ frame."
+      "n": 23,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 24,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 25,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 26,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 27,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 28,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 29,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
+    },
+    {
+      "n": 82,
+      "minutes": 3,
+      "why": "Breadth probe (round robin over open targets)."
     }
-  ]
+  ],
+  "auto": true
 }
