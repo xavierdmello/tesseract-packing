@@ -399,9 +399,10 @@ function render() {
       const now = searchingNs.has(q.n), done = taken.has(q.n) && !now;
       return { now, done, html: `<li class="${now ? 'now' : ''}"><b>n = ${q.n}</b> · ${+(q.minutes || 1)} min <span class="st">${now ? '● searching now' : done ? '✓ searched this round' : 'next up'}</span><br>${q.why}</li>` }; });
     const upNext = items.filter(x => !x.now && !x.done).slice(0, 4);
+    const wasOpen = !!document.querySelector('#nb-queue details[open]');   // keep the user's expand/collapse state
     document.getElementById('nb-queue').innerHTML =
       '<p class="small" style="margin:6px 0 0"><b>Next up</b></p>' + (upNext.length ? upNext.map(x => x.html).join('') : '<li>(plan cycling: every entry searched this round)</li>') +
-      `<details><summary class="small">Full plan (${items.length} entries, ${items.filter(x => x.now).length} searching now)</summary>${items.map(x => x.html).join('')}</details>`;
+      `<details${wasOpen ? ' open' : ''}><summary class="small">Full plan (${items.length} entries, ${items.filter(x => x.now).length} searching now)</summary>${items.map(x => x.html).join('')}</details>`;
     document.getElementById('nb-ins').innerHTML = (PLAN.insights || []).map(x => `<li>${x}</li>`).join('');
   }
   const imp = L.events.filter(x => /->/.test(x)).slice(-1)[0];
